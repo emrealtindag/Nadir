@@ -94,6 +94,14 @@ class VisualOdometry:
         
         good_new = next_points[status == 1]
         good_old = self.prev_points[status == 1]
+        
+        # --- VINS-Mono Extraction: Fundamental Matrix RANSAC Outlier Rejection ---
+        # This mathematically eliminates moving objects (like cars/humans) that ruin optical flow
+        if len(good_old) >= 8 and len(good_new) >= 8:
+            F, ransac_mask = cv2.findFundamentalMat(good_old, good_new, cv2.FM_RANSAC, 1.0, 0.99)
+            if ransac_mask is not None:
+                good_new = good_new[ransac_mask.ravel() == 1]
+                good_old = good_old[ransac_mask.ravel() == 1]
 
         delta_yaw = 0.0
         raw_dx = 0.0

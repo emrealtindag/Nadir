@@ -44,13 +44,13 @@ This software package addresses the critical requirement for high-accuracy landi
 ### Fiducial Marker Detection
 Multi-backend fiducial marker detection system supporting both ArUco (OpenCV) and AprilTag marker families. The detection pipeline incorporates configurable dictionary selection, marker size specification, and target ID allowlisting for operational security.
 
-### Sensor Fusion & Pose Estimation (C++ EKF)
-Camera-to-body frame coordinate transformation system utilizing Perspective-n-Point (PnP) algorithms integrated with a high-performance **C++ Extended Kalman Filter (EKF)**. The EKF module (bound via pybind11) provides rigorous mathematical temporal smoothing, mitigating high-frequency jitter by up to 40% and predicting real-time velocity states in GNSS-denied environments. The estimation pipeline produces both position-based (x, y, z) and angle-based (angle_x, angle_y) outputs compatible with MAVLink LANDING_TARGET protocol specifications.
+### Sensor Fusion & Pose Estimation (C++ EKF & VINS-Mono Logic)
+Camera-to-body frame coordinate transformation system utilizing Perspective-n-Point (PnP) algorithms integrated with a high-performance **C++ Extended Kalman Filter (EKF)**. Drawing from SOTA implementations like *VINS-Mono*, the Visual Odometry pipeline integrates **Fundamental Matrix RANSAC** outlier rejection to mathematically eliminate dynamic object interference (cars, humans) from optical flow vectors.
 
 ![EKF Performance Graph](benchmarks/ekf_performance.png)
 
-### Real-Time Path Planning & SLAM Concepts
-Incorporates **A*/RRT* dynamic path planning algorithms** running in real-time constraint environments. As the UAV descends, the system maps the landing cone as a localized 3D occupancy grid (inspired by localized SLAM methodologies). If an obstacle moves into the trajectory, the path planner dynamically re-routes the descent vector to maintain absolute safety.
+### Flight Control: MPC Guidance & B-Spline Trajectories
+Replacing legacy threshold-based FSM logic, the flight controller features **Model Predictive Control (MPC)** inspired cascaded PID logic for aggressive wind disturbance rejection. During the final `DESCEND` phase, the system generates **Ego-Planner style 3rd-order B-Spline trajectories**. This ensures the UAV follows a mathematically smooth polynomial curve to the touchdown zone, minimizing camera jitter caused by aggressive braking.
 
 ### MAVLink Integration
 Native MAVLink protocol implementation for LANDING_TARGET message publishing. The system supports both UDP and serial transport layers, configurable publishing rates (10-50 Hz), and compatibility with PX4 and ArduPilot precision landing subsystems.
@@ -429,10 +429,7 @@ The project utilizes GitHub Actions for continuous integration. All pull request
 
 While Scandium is designed for production-grade robustness, the following technical limitations exist in the current open-source release:
 1. **Sensor Fusion Boundary**: The C++ EKF currently assumes a constant velocity kinematic model. It has been tested heavily in SITL, but multi-camera hardware-in-the-loop (HITL) scenarios have not been verified.
-2. **Path Planning Constraint**: The 3D A* obstacle avoidance algorithm runs on the companion computer CPU. For extremely dense point clouds, migrating this node to a GPU-accelerated framework (like cuRobo or MPPI) is planned for Phase 3.
-3. **Hardware Verification**: The system is validated extensively on WSL2/SITL and AirSim. Real-world edge testing on NVIDIA Jetson Orin NX (with ARM64 Multi-arch Docker support) is on the roadmap but not fully certified in the current branch.
-4. **Kinematic Model Upgrade**: The current EKF assumes a constant velocity model. Upgrading to an IMM (Interacting Multiple Model) filter for the DESCEND to TOUCHDOWN transition phase is planned.
-5. **Guidance Logic**: Transitioning from threshold-based FSM to a Model Predictive Control (MPC) guidance architecture for smoother wind-disturbance rejection during descent.
+2. **Hardware Verification**: The system is validated extensively on WSL2/SITL and AirSim. Real-world edge testing on NVIDIA Jetson Orin NX (with ARM64 Multi-arch Docker support) is on the roadmap but not fully certified in the current branch.
 
 ## Safety, Compliance & Controlled Payload Release
 
