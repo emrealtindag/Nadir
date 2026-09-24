@@ -49,8 +49,8 @@ Camera-to-body frame coordinate transformation system utilizing Perspective-n-Po
 
 ![EKF Performance Graph](benchmarks/ekf_performance.png)
 
-### Flight Control: MPC Guidance & B-Spline Trajectories
-Replacing legacy threshold-based FSM logic, the flight controller features **Model Predictive Control (MPC)** inspired cascaded PID logic for aggressive wind disturbance rejection. During the final `DESCEND` phase, the system generates **Ego-Planner style 3rd-order B-Spline trajectories**. This ensures the UAV follows a mathematically smooth polynomial curve to the touchdown zone, minimizing camera jitter caused by aggressive braking.
+### Flight Control: Advanced Guidance & B-Spline Trajectories
+Replacing legacy threshold-based FSM logic, the flight controller features an **Advanced Cascaded PID architecture with Feedforward Velocity Prediction** (heavily inspired by the kinematic constraints of Model Predictive Control horizons). During the final `DESCEND` phase, the system generates **3rd-order B-Spline trajectories**. This ensures the UAV follows a mathematically smooth polynomial curve to the touchdown zone, minimizing camera jitter caused by aggressive braking.
 
 ### MAVLink Integration
 Native MAVLink protocol implementation for LANDING_TARGET message publishing. The system supports both UDP and serial transport layers, configurable publishing rates (10-50 Hz), and compatibility with PX4 and ArduPilot precision landing subsystems.
@@ -93,13 +93,16 @@ Comprehensive simulation environment support including Microsoft AirSim and Soft
 
 ## Performance Benchmarks
 
-*Hardware: NVIDIA Jetson Orin NX (ARM64) | Camera: 1080p @ 60 FPS*
+> **Note: [SITL VALIDATION ONLY]**
+> *The following metrics were derived exclusively from Software-In-The-Loop (SITL) simulations using Microsoft AirSim under controlled wind disturbances (up to 5m/s). These figures have not yet been certified in physical hardware-in-the-loop (HITL) flight tests.*
+
+*Hardware Profile: NVIDIA Jetson Orin NX (ARM64) | Camera: 1080p @ 60 FPS*
 
 | Metric | Raw PnP (Baseline) | Scandium C++ EKF | Improvement |
 |--------|--------------------|------------------|-------------|
 | **Lateral Jitter (Hover)** | ±14.2 cm | ±8.1 cm | **42.9% reduction** |
 | **End-to-End Latency** | 45 ms | 22 ms (with TensorRT) | **51% faster** |
-| **Touchdown Accuracy** | ±15 cm | ±4 cm | **3.7x precision** |
+| **Touchdown Accuracy** | ±15 cm | ±4 cm (SITL) | **3.7x precision** |
 
 ## Hardware Reference (BOM)
 
@@ -113,10 +116,10 @@ To deploy Scandium in a real-world scenario, the following hardware architecture
 
 | Feature | Scandium | `apriltag_ros` + `precland` | PX4 Native Target Tracker |
 |---------|----------|-----------------------------|---------------------------|
-| **Sensor Fusion** | C++ EKF (Predicts through occlusion) | None (Raw coordinate pass-through) | Basic Low-Pass Filter |
-| **Dynamic Obstacles** | Deep Learning (YOLO/Segmentation) | None (Blind to humans/vehicles) | None |
-| **GNSS-Denied VO** | Optical Flow Fallback | None | None |
-| **Architecture** | Edge-native, Docker, No ROS overhead | Heavy ROS1/ROS2 dependency | Firmware-locked |
+| **Sensor Fusion** | C++ EKF (Predicts through occlusion) | Typically requires external filter nodes | Internal EKF2 / Low-Pass Filter |
+| **Dynamic Obstacles** | Deep Learning (YOLO/Segmentation) | Not natively supported | Not natively supported |
+| **GNSS-Denied VO** | Optical Flow Fallback | External packages required | Requires external VIO |
+| **Architecture** | Edge-native, Docker, No ROS overhead | ROS1/ROS2 ecosystem | Firmware-locked |
 
 ## Field Deployment Checklist
 
@@ -428,8 +431,10 @@ The project utilizes GitHub Actions for continuous integration. All pull request
 ## Known Limitations & Roadmap
 
 While Scandium is designed for production-grade robustness, the following technical limitations exist in the current open-source release:
-1. **Sensor Fusion Boundary**: The C++ EKF currently assumes a constant velocity kinematic model. It has been tested heavily in SITL, but multi-camera hardware-in-the-loop (HITL) scenarios have not been verified.
-2. **Hardware Verification**: The system is validated extensively on WSL2/SITL and AirSim. Real-world edge testing on NVIDIA Jetson Orin NX (with ARM64 Multi-arch Docker support) is on the roadmap but not fully certified in the current branch.
+1. **Sensor Fusion Boundary**: The C++ EKF currently assumes a constant velocity kinematic model. Upgrading to an IMM (Interacting Multiple Model) filter for the DESCEND to TOUCHDOWN transition phase is planned.
+2. **Hardware Verification**: The system is validated extensively on WSL2/SITL and AirSim. Real-world edge testing on NVIDIA Jetson Orin NX is on the roadmap but not fully certified.
+3. **RANSAC CPU Overhead**: The integration of VINS-Mono style Fundamental Matrix RANSAC for optical flow outlier rejection introduces additional CPU overhead. On low-end companions (e.g., Raspberry Pi 4), frame rates may drop during dense feature tracking.
+4. **B-Spline Trajectory Constraints**: The current 3rd-order B-Spline trajectory generator assumes a static landing zone altitude during the DESCEND phase. If the target altitude changes aggressively (e.g., landing on a pitching ship deck), the trajectory may require real-time re-knotting which is computationally expensive without GPU acceleration.
 
 ## Safety, Compliance & Controlled Payload Release
 
