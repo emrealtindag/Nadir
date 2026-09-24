@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this software in your research, please cite it as below."
+authors:
+  - family-names: "Altındağ"
+    given-names: "Emre"
+    orcid: "https://orcid.org/0000-0000-0000-0000"
+title: "Scandium: Precision Landing and GNSS-Denied Navigation System for UAVs"
+version: 1.0.0
+date-released: 2026-09-25
+url: "https://github.com/emrealtindag/scandium"
+repository-code: "https://github.com/emrealtindag/scandium"
+keywords:
+  - UAV
+  - Precision Landing
+  - Sensor Fusion
+  - Extended Kalman Filter
+  - Computer Vision
+  - PX4
+  - ArduPilot
+license: Apache-2.0
+abstract: >
+  Scandium is a production-grade precision landing system designed for UAV and multirotor platforms. 
+  It provides GNSS-denied navigation, optical flow odometry, and deep learning-based landability assessment
+  integrated tightly with MAVLink autopilot systems.
