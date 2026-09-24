@@ -1,0 +1,48 @@
+# ArUco Fiducial Configuration
+# Standard ArUco marker configuration for precision landing
+
+backend: aruco
+
+# Physical marker parameters
+marker_size_m: 0.20
+target_id_allowlist:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+
+# ArUco detection parameters
+aruco:
+  # Available dictionaries:
+  # DICT_4X4_50, DICT_4X4_100, DICT_4X4_250, DICT_4X4_1000
+  # DICT_5X5_50, DICT_5X5_100, DICT_5X5_250, DICT_5X5_1000
+  # DICT_6X6_50, DICT_6X6_100, DICT_6X6_250, DICT_6X6_1000
+  # DICT_7X7_50, DICT_7X7_100, DICT_7X7_250, DICT_7X7_1000
+  # DICT_ARUCO_ORIGINAL
+  dictionary: DICT_4X4_100
+
+  # Enable sub-pixel corner refinement for improved accuracy
+  refine: true
+
+  # Detection parameters (OpenCV ArUco defaults)
+  # Uncomment and modify as needed
+  # adaptive_thresh_win_size_min: 3
+  # adaptive_thresh_win_size_max: 23
+  # adaptive_thresh_win_size_step: 10
+  # adaptive_thresh_constant: 7
+  # min_marker_perimeter_rate: 0.03
+  # max_marker_perimeter_rate: 4.0
+  # polygonal_approx_accuracy_rate: 0.03
+  # min_corner_distance_rate: 0.05
+  # min_distance_to_border: 3
+  # min_marker_distance_rate: 0.05
+  # corner_refinement_win_size: 5
+  # corner_refinement_max_iterations: 30
+  # corner_refinement_min_accuracy: 0.1
+  # marker_border_bits: 1
+  # perspective_remove_pixel_per_cell: 4
+  # perspective_remove_ignored_margin_per_cell: 0.13
+  # max_erroneous_bits_in_border_rate: 0.35
+  # min_otsu_std_dev: 5.0
+  # error_correction_rate: 0.6

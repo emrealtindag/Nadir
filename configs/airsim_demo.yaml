@@ -1,0 +1,94 @@
+# Scandium AirSim Demo Configuration
+# Configuration optimized for AirSim simulation environment
+
+project:
+  name: Scandium
+  run_id: auto
+  mode: airsim
+  log_level: INFO
+  output_dir: ./runs/airsim
+
+camera:
+  source: airsim
+  device_index: 0
+  video_path: ""
+  width: 1280
+  height: 720
+  fps: 30
+  intrinsics_path: configs/camera/calib_airsim.yaml
+  extrinsics_path: configs/camera/extrinsics_example.yaml
+  undistort: false
+
+fiducials:
+  backend: aruco
+  marker_size_m: 0.50
+  target_id_allowlist: [1, 2, 3, 4, 5]
+  aruco:
+    dictionary: DICT_4X4_100
+    refine: true
+  apriltag:
+    family: tag36h11
+    quad_decimate: 1.0
+    quad_sigma: 0.0
+
+pose:
+  frame: MAV_FRAME_BODY_NED
+  filter:
+    type: exp_smooth
+    alpha: 0.40
+    outlier_mahalanobis: 4.0
+  quality:
+    max_reproj_error_px: 5.0
+    min_tag_area_px: 400
+
+mavlink:
+  transport: udp
+  udp:
+    address: "127.0.0.1"
+    port: 14550
+  serial:
+    device: "/dev/ttyAMA0"
+    baud: 921600
+  system_id: 42
+  component_id: 200
+  target_system_id: 1
+  target_component_id: 1
+  landing_target_rate_hz: 20
+
+control:
+  enable_fsm: true
+  fsm_rate_hz: 20
+  thresholds:
+    acquire_confidence: 0.65
+    align_error_m: 0.30
+    abort_landability: 0.35
+  limits:
+    max_lateral_speed_mps: 2.0
+    max_descent_speed_mps: 1.0
+
+landability:
+  enabled: true
+  method: heuristic
+  heuristic:
+    texture_var_min: 10.0
+    motion_threshold: 0.20
+  ml:
+    model_path: ""
+    device: cpu
+    score_threshold: 0.6
+
+simulation:
+  airsim:
+    ip: "127.0.0.1"
+    vehicle_name: Drone1
+    camera_name: "0"
+    image_type: Scene
+  sitl:
+    autopilot: ardupilot
+    start_local: false
+    mavproxy: false
+
+scenarios:
+  enabled: true
+  selected: airsim_basic
+  path: configs/scenarios/airsim_basic.yaml

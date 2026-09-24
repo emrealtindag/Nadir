@@ -1,0 +1,83 @@
+[tool.poetry]
+name = "scandium"
+version = "0.1.0"
+description = "Production-grade precision landing system for UAV/drone platforms with fiducial marker detection and MAVLink integration"
+authors = ["Scandium Development Team"]
+license = "Apache-2.0"
+readme = "README.md"
+homepage = "https://github.com/scandium-oss/scandium"
+repository = "https://github.com/scandium-oss/scandium"
+documentation = "https://scandium-oss.github.io/scandium"
+keywords = ["uav", "drone", "precision-landing", "mavlink", "fiducial", "aruco", "apriltag"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
+]
+packages = [{ include = "scandium", from = "src" }]
+
+[tool.poetry.scripts]
+scandium = "scandium.cli:app"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+numpy = "^1.26.0"
+opencv-python = "^4.9.0"
+pymavlink = "^2.4.41"
+pydantic = "^2.5.0"
+pydantic-settings = "^2.1.0"
+typer = { version = "^0.9.0", extras = ["all"] }
+structlog = "^24.1.0"
+pyyaml = "^6.0.1"
+scipy = "^1.12.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+pytest-cov = "^4.1.0"
+pytest-asyncio = "^0.23.0"
+mypy = "^1.8.0"
+ruff = "^0.2.0"
+black = "^24.1.0"
+pre-commit = "^3.6.0"
+hypothesis = "^6.98.0"
+types-PyYAML = "^6.0.12"
+
+[tool.poetry.group.docs.dependencies]
+mkdocs = "^1.5.0"
+mkdocs-material = "^9.5.0"
+mkdocstrings = { version = "^0.24.0", extras = ["python"] }
+
+[tool.poetry.group.sim.dependencies]
+airsim = { version = "^1.8.1", optional = true }
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.coverage.run]
+source = ["src/scandium"]
+branch = true
+omit = ["*/tests/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]

@@ -1,0 +1,233 @@
+# =============================================================================
+# Scandium - Production-Grade Precision Landing System
+# MkDocs Documentation Configuration
+# =============================================================================
+# MkDocs is a static site generator for project documentation.
+# Reference: https://www.mkdocs.org/user-guide/configuration/
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Site Configuration
+# -----------------------------------------------------------------------------
+
+site_name: Scandium Documentation
+site_description: Production-grade precision landing system for UAV platforms
+site_author: Scandium Development Team
+site_url: https://scandium-oss.github.io/scandium
+
+# Repository information
+repo_name: scandium-oss/scandium
+repo_url: https://github.com/scandium-oss/scandium
+edit_uri: edit/main/docs/
+
+# Copyright notice
+copyright: Copyright &copy; 2024-2025 Scandium Development Team
+
+# -----------------------------------------------------------------------------
+# Theme Configuration
+# -----------------------------------------------------------------------------
+
+theme:
+  name: material
+  language: en
+
+  # Color palette
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+  # Font configuration
+  font:
+    text: Roboto
+    code: Roboto Mono
+
+  # Icon configuration
+  icon:
+    repo: fontawesome/brands/github
+    logo: material/airplane-landing
+
+  # Feature flags
+  features:
+    - announce.dismiss
+    - content.action.edit
+    - content.action.view
+    - content.code.annotate
+    - content.code.copy
+    - content.tabs.link
+    - header.autohide
+    - navigation.expand
+    - navigation.footer
+    - navigation.indexes
+    - navigation.instant
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+    - toc.integrate
+
+# -----------------------------------------------------------------------------
+# Navigation Structure
+# -----------------------------------------------------------------------------
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: installation.md
+      - Quick Start: quickstart.md
+      - Configuration: configuration.md
+  - Architecture:
+      - Overview: architecture.md
+      - Perception Layer: perception.md
+      - Control Layer: control.md
+      - MAVLink Integration: mavlink.md
+  - Integration:
+      - PX4 Autopilot: px4.md
+      - ArduPilot: ardupilot.md
+      - AirSim Simulation: simulation.md
+  - Algorithms:
+      - Fiducial Detection: fiducials.md
+      - Pose Estimation: pose.md
+      - Landability Analysis: landability.md
+  - Development:
+      - Contributing: contributing.md
+      - Testing: testing.md
+      - Code Style: codestyle.md
+  - Operations:
+      - Deployment: deployment.md
+      - Troubleshooting: troubleshooting.md
+      - Runbooks: runbooks.md
+  - API Reference:
+      - Overview: api/index.md
+
+# -----------------------------------------------------------------------------
+# Markdown Extensions
+# -----------------------------------------------------------------------------
+
+markdown_extensions:
+  # Python Markdown extensions
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      title: On this page
+      toc_depth: 3
+
+  # PyMdown Extensions
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      repo_url_shorthand: true
+      user: scandium-oss
+      repo: scandium
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# -----------------------------------------------------------------------------
+# Plugins
+# -----------------------------------------------------------------------------
+
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+  - minify:
+      minify_html: true
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: google
+            docstring_options:
+              ignore_init_summary: true
+            merge_init_into_class: true
+            show_root_heading: true
+            show_root_full_path: false
+            show_signature_annotations: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            signature_crossrefs: true
+
+# -----------------------------------------------------------------------------
+# Extra Configuration
+# -----------------------------------------------------------------------------
+
+extra:
+  # Social links
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/scandium-oss/scandium
+      name: GitHub Repository
+
+  # Version provider
+  version:
+    provider: mike
+
+  # Analytics (disabled by default)
+  # analytics:
+  #   provider: google
+  #   property: G-XXXXXXXXXX
+
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+# -----------------------------------------------------------------------------
+# Build Configuration
+# -----------------------------------------------------------------------------
+
+strict: true
+use_directory_urls: true

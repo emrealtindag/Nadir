@@ -1,0 +1,94 @@
+# Scandium PX4 SITL Configuration
+# Configuration for PX4 Software-In-The-Loop testing
+
+project:
+  name: Scandium
+  run_id: auto
+  mode: sitl
+  log_level: DEBUG
+  output_dir: ./runs/px4
+
+camera:
+  source: airsim
+  device_index: 0
+  video_path: ""
+  width: 1280
+  height: 720
+  fps: 30
+  intrinsics_path: configs/camera/calib_example.yaml
+  extrinsics_path: configs/camera/extrinsics_example.yaml
+  undistort: true
+
+fiducials:
+  backend: aruco
+  marker_size_m: 0.20
+  target_id_allowlist: [1]
+  aruco:
+    dictionary: DICT_4X4_100
+    refine: true
+  apriltag:
+    family: tag36h11
+    quad_decimate: 1.0
+    quad_sigma: 0.0
+
+pose:
+  frame: MAV_FRAME_BODY_FRD
+  filter:
+    type: exp_smooth
+    alpha: 0.35
+    outlier_mahalanobis: 4.0
+  quality:
+    max_reproj_error_px: 3.0
+    min_tag_area_px: 800
+
+mavlink:
+  transport: udp
+  udp:
+    address: "127.0.0.1"
+    port: 14540
+  serial:
+    device: "/dev/ttyUSB0"
+    baud: 921600
+  system_id: 42
+  component_id: 200
+  target_system_id: 1
+  target_component_id: 1
+  landing_target_rate_hz: 30
+
+control:
+  enable_fsm: true
+  fsm_rate_hz: 30
+  thresholds:
+    acquire_confidence: 0.70
+    align_error_m: 0.20
+    abort_landability: 0.40
+  limits:
+    max_lateral_speed_mps: 1.5
+    max_descent_speed_mps: 0.7
+
+landability:
+  enabled: true
+  method: heuristic
+  heuristic:
+    texture_var_min: 12.0
+    motion_threshold: 0.15
+  ml:
+    model_path: ""
+    device: cpu
+    score_threshold: 0.6
+
+simulation:
+  airsim:
+    ip: "127.0.0.1"
+    vehicle_name: Drone1
+    camera_name: "0"
+    image_type: Scene
+  sitl:
+    autopilot: px4
+    start_local: true
+    mavproxy: false
+
+scenarios:
+  enabled: false
+  selected: smoke
+  path: configs/scenarios/smoke.yaml

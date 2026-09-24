@@ -1,0 +1,12 @@
+# Camera Extrinsics Example
+# Camera-to-body transform for downward-facing camera
+
+# Rotation matrix from camera frame to body frame
+# Assumes camera looks straight down
+rotation_matrix:
+  - [0.0, 1.0, 0.0]
+  - [1.0, 0.0, 0.0]
+  - [0.0, 0.0, -1.0]
+
+# Translation from body origin to camera origin (meters)
+translation: [0.0, 0.0, 0.05]

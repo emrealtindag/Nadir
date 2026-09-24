@@ -1,0 +1,299 @@
+# =============================================================================
+# Scandium - Production-Grade Precision Landing System
+# Ruff Linter Configuration
+# =============================================================================
+# Ruff is an extremely fast Python linter and code formatter.
+# Reference: https://docs.astral.sh/ruff/configuration/
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Global Settings
+# -----------------------------------------------------------------------------
+
+# Target Python version for syntax and feature compatibility
+target-version = "py311"
+
+# Maximum line length (consistent with Black formatter)
+line-length = 100
+
+# Output format
+output-format = "grouped"
+
+# File selection
+include = ["*.py", "*.pyi"]
+
+# File exclusions
+extend-exclude = [
+    ".git",
+    ".github",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".tox",
+    ".venv",
+    "__pycache__",
+    "build",
+    "dist",
+    "site",
+    "*.egg-info",
+]
+
+# Fix violations automatically when possible
+fix = false
+
+# Show fixes in output
+show-fixes = true
+
+# -----------------------------------------------------------------------------
+# Linting Rules
+# -----------------------------------------------------------------------------
+
+[lint]
+# Enable rule categories
+select = [
+    # Pyflakes
+    "F",
+    # pycodestyle (Error)
+    "E",
+    # pycodestyle (Warning)
+    "W",
+    # isort
+    "I",
+    # pep8-naming
+    "N",
+    # pydocstyle
+    "D",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-comprehensions
+    "C4",
+    # flake8-datetimez
+    "DTZ",
+    # flake8-debugger
+    "T10",
+    # flake8-errmsg
+    "EM",
+    # flake8-implicit-str-concat
+    "ISC",
+    # flake8-pie
+    "PIE",
+    # flake8-print (disabled in debug contexts)
+    "T20",
+    # flake8-pytest-style
+    "PT",
+    # flake8-quotes
+    "Q",
+    # flake8-return
+    "RET",
+    # flake8-simplify
+    "SIM",
+    # flake8-tidy-imports
+    "TID",
+    # flake8-type-checking
+    "TCH",
+    # flake8-unused-arguments
+    "ARG",
+    # flake8-use-pathlib
+    "PTH",
+    # Pylint
+    "PL",
+    # tryceratops
+    "TRY",
+    # perflint
+    "PERF",
+    # Ruff-specific rules
+    "RUF",
+]
+
+# Ignore specific rules
+ignore = [
+    # Missing docstring in public module (allow for __init__.py)
+    "D104",
+    # Missing docstring in magic method
+    "D105",
+    # Missing docstring in __init__
+    "D107",
+    # One-line docstring should fit on one line
+    "D200",
+    # No blank lines allowed after function docstring
+    "D202",
+    # First line should end with a period (conflicts with imperative mood)
+    "D400",
+    # First line should be in imperative mood
+    "D401",
+    # Too many arguments to function call
+    "PLR0913",
+    # Magic value used in comparison
+    "PLR2004",
+    # Use ternary operator (can reduce readability)
+    "SIM108",
+    # Exception must not use a string literal
+    "EM101",
+    # Exception must not use an f-string literal
+    "EM102",
+    # Avoid specifying long messages outside the exception class
+    "TRY003",
+    # Abstract raise without message
+    "TRY002",
+]
+
+# Allow autofix for all enabled rules
+fixable = ["ALL"]
+unfixable = []
+
+# Rules that are allowed to be violated in specific contexts
+per-file-ignores = { "tests/**/*.py" = [
+    "D",
+    "ARG",
+    "PLR2004",
+    "S101",
+], "scripts/**/*.py" = [
+    "T20",
+    "D",
+], "__init__.py" = [
+    "F401",
+] }
+
+# -----------------------------------------------------------------------------
+# Import Sorting (isort)
+# -----------------------------------------------------------------------------
+
+[lint.isort]
+# Combine "as" imports on the same line
+combine-as-imports = true
+
+# Force single line imports for standard library
+force-single-line = false
+
+# Force imports to be sorted alphabetically within sections
+force-sort-within-sections = true
+
+# Known first-party packages
+known-first-party = ["scandium"]
+
+# Known third-party packages
+known-third-party = [
+    "numpy",
+    "cv2",
+    "pymavlink",
+    "pydantic",
+    "typer",
+    "structlog",
+    "yaml",
+    "scipy",
+    "pytest",
+]
+
+# Lines between import sections
+lines-after-imports = 2
+lines-between-types = 1
+
+# Import section order
+section-order = [
+    "future",
+    "standard-library",
+    "third-party",
+    "first-party",
+    "local-folder",
+]
+
+# -----------------------------------------------------------------------------
+# Docstring Style (pydocstyle)
+# -----------------------------------------------------------------------------
+
+[lint.pydocstyle]
+# Use Google-style docstrings
+convention = "google"
+
+# Property decorators that should be treated as properties
+property-decorators = ["property", "functools.cached_property"]
+
+# -----------------------------------------------------------------------------
+# Flake8 Naming
+# -----------------------------------------------------------------------------
+
+[lint.flake8-naming]
+# Allow specific naming patterns for class attributes
+classmethod-decorators = ["classmethod", "pydantic.field_validator"]
+
+# Allow ALL_CAPS for module-level constants
+ignore-names = ["*_CONSTANT", "*_DEFAULT", "*_MIN", "*_MAX"]
+
+# -----------------------------------------------------------------------------
+# Flake8 Pytest Style
+# -----------------------------------------------------------------------------
+
+[lint.flake8-pytest-style]
+# Fixture scope: prefer function-scoped fixtures
+fixture-parentheses = true
+
+# Mark parentheses: require parentheses for marks
+mark-parentheses = true
+
+# Parametrize names tuple style
+parametrize-names-type = "tuple"
+
+# Parametrize values row style
+parametrize-values-row-type = "tuple"
+
+# Parametrize values type
+parametrize-values-type = "list"
+
+# Raises: require match parameter
+raises-require-match-for = [
+    "BaseException",
+    "Exception",
+    "ValueError",
+    "TypeError",
+]
+
+# -----------------------------------------------------------------------------
+# Pylint
+# -----------------------------------------------------------------------------
+
+[lint.pylint]
+# Maximum number of arguments for function / method
+max-args = 10
+
+# Maximum number of boolean expressions in an if statement
+max-bool-expr = 5
+
+# Maximum number of branches in a function body
+max-branches = 15
+
+# Maximum number of local variables
+max-locals = 20
+
+# Maximum number of public methods for a class
+max-public-methods = 25
+
+# Maximum number of return statements in a function body
+max-returns = 8
+
+# Maximum number of statements in a function body
+max-statements = 60
+
+# -----------------------------------------------------------------------------
+# Format Settings
+# -----------------------------------------------------------------------------
+
+[format]
+# Quote style
+quote-style = "double"
+
+# Indent style
+indent-style = "space"
+
+# Skip magic trailing comma
+skip-magic-trailing-comma = false
+
+# Line ending
+line-ending = "lf"
+
+# Docstring code format
+docstring-code-format = true
+
+# Docstring code line length
+docstring-code-line-length = 80

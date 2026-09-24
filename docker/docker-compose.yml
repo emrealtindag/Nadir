@@ -1,0 +1,115 @@
+# Scandium Docker Compose Configuration
+# Orchestrates multi-container deployment for development and testing
+
+version: '3.9'
+
+services:
+  # ============================================================================
+  # Scandium Precision Landing Service
+  # ============================================================================
+  scandium:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: scandium:latest
+    container_name: scandium-precision-landing
+    restart: unless-stopped
+
+    # Network configuration for MAVLink communication
+    network_mode: host
+
+    # Volume mounts
+    volumes:
+      - ../configs:/app/configs:ro
+      - ../runs:/app/runs:rw
+      - /dev/video0:/dev/video0:rw  # Camera device (optional)
+
+    # Environment variables
+    environment:
+      - SCANDIUM_LOG_LEVEL=INFO
+      - SCANDIUM_LOG_FORMAT=json
+      - TZ=UTC
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+    # Command override for production
+    command: ["scandium", "run", "--config", "/app/configs/default.yaml"]
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "scandium", "diagnostics", "--config", "/app/configs/default.yaml"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ============================================================================
+  # Development Service with Hot Reload
+  # ============================================================================
+  scandium-dev:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.dev
+    image: scandium:dev
+    container_name: scandium-dev
+    profiles:
+      - dev
+
+    network_mode: host
+
+    volumes:
+      - ../src:/app/src:ro
+      - ../configs:/app/configs:ro
+      - ../tests:/app/tests:ro
+      - ../runs:/app/runs:rw
+
+    environment:
+      - SCANDIUM_LOG_LEVEL=DEBUG
+      - SCANDIUM_LOG_FORMAT=console
+
+    command: ["scandium", "run", "--config", "/app/configs/default.yaml"]
+
+  # ============================================================================
+  # Test Runner Service
+  # ============================================================================
+  test:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.dev
+    image: scandium:dev
+    container_name: scandium-test
+    profiles:
+      - test
+
+    volumes:
+      - ../src:/app/src:ro
+      - ../tests:/app/tests:ro
+      - ../configs:/app/configs:ro
+      - ./coverage:/app/coverage:rw
+
+    environment:
+      - PYTHONPATH=/app/src
+
+    command: ["pytest", "tests/", "-v", "--cov=src/scandium", "--cov-report=xml:/app/coverage/coverage.xml"]
+
+# ==============================================================================
+# Networks
+# ==============================================================================
+networks:
+  default:
+    driver: bridge
+
+# ==============================================================================
+# Volumes
+# ==============================================================================
+volumes:
+  scandium-runs:
+    driver: local

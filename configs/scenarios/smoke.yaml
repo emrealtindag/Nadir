@@ -1,0 +1,56 @@
+# Smoke Test Scenario
+# Basic functionality validation
+
+id: smoke
+name: Smoke Test
+description: Basic end-to-end precision landing validation
+
+setup:
+  reset_simulation: true
+  initial_altitude_m: 10.0
+  marker_position: [0.0, 0.0, 0.0]
+  marker_id: 1
+
+steps:
+  - name: Initialize System
+    action: initialize
+    params: {}
+    expected:
+      config_loaded: true
+      camera_connected: true
+    timeout_s: 10
+
+  - name: Wait for Marker Detection
+    action: wait_detection
+    params:
+      max_wait_s: 30
+    expected:
+      marker_detected: true
+      confidence_min: 0.7
+    timeout_s: 35
+
+  - name: Verify Pose Estimation
+    action: check_pose
+    params: {}
+    expected:
+      pose_valid: true
+      reproj_error_max_px: 5.0
+    timeout_s: 10
+
+  - name: Check LANDING_TARGET Messages
+    action: check_mavlink
+    params:
+      message_type: LANDING_TARGET
+      duration_s: 5
+    expected:
+      messages_received: true
+      rate_hz_min: 15
+    timeout_s: 10
+
+teardown:
+  stop_system: true
+  save_logs: true
+
+pass_criteria:
+  all_steps_passed: true
+  min_detection_rate: 0.9
