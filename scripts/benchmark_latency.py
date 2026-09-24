@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Latency Benchmark Utility for Scandium.
+Latency Benchmark Utility for Nadir.
 
 Measures end-to-end pipeline latency including image acquisition,
 fiducial detection, pose estimation, and MAVLink message generation.
@@ -175,7 +175,7 @@ def print_statistics(name: str, latencies: List[float]) -> None:
 def main() -> int:
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="Latency benchmark utility for Scandium precision landing system.",
+        description="Latency benchmark utility for Nadir precision landing system.",
     )
 
     parser.add_argument(
@@ -210,7 +210,7 @@ def main() -> int:
     args = parser.parse_args()
 
     print("=" * 60)
-    print("SCANDIUM LATENCY BENCHMARK")
+    print("NADIR LATENCY BENCHMARK")
     print("=" * 60)
     print(f"Iterations: {args.iterations}")
     print(f"Resolution: {args.width}x{args.height}")

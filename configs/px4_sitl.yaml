@@ -1,8 +1,8 @@
-# Scandium PX4 SITL Configuration
+# Nadir PX4 SITL Configuration
 # Configuration for PX4 Software-In-The-Loop testing
 
 project:
-  name: Scandium
+  name: Nadir
   run_id: auto
   mode: sitl
   log_level: DEBUG

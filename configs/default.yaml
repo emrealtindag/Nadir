@@ -1,8 +1,8 @@
-# Scandium Default Configuration
+# Nadir Default Configuration
 # This is the primary configuration file for the precision landing system
 
 project:
-  name: Scandium
+  name: Nadir
   run_id: auto
   mode: sitl
   log_level: INFO

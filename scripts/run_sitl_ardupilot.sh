@@ -1,5 +1,5 @@
 #!/bin/bash
-# ArduPilot SITL Launcher for Scandium
+# ArduPilot SITL Launcher for Nadir
 #
 # Launches ArduPilot SITL with appropriate configuration for
 # precision landing development and testing.
@@ -39,7 +39,7 @@ SYSID=1
 # ==============================================================================
 
 show_help() {
-    echo "ArduPilot SITL Launcher for Scandium"
+    echo "ArduPilot SITL Launcher for Nadir"
     echo ""
     echo "Usage: $0 [options]"
     echo ""

@@ -1,5 +1,5 @@
 import pytest
-from scandium.control.fsm import LandingFSM, SystemInputs, LandingState
+from nadir.control.fsm import LandingFSM, SystemInputs, LandingState
 
 def test_fsm_initial_state():
     fsm = LandingFSM()

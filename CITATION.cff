@@ -4,11 +4,11 @@ authors:
   - family-names: "Altındağ"
     given-names: "Emre"
     orcid: "https://orcid.org/0000-0000-0000-0000"
-title: "Scandium: Precision Landing and GNSS-Denied Navigation System for UAVs"
+title: "Nadir: Precision Landing and GNSS-Denied Navigation System for UAVs"
 version: 1.0.0
 date-released: 2026-09-25
-url: "https://github.com/emrealtindag/scandium"
-repository-code: "https://github.com/emrealtindag/scandium"
+url: "https://github.com/emrealtindag/nadir"
+repository-code: "https://github.com/emrealtindag/nadir"
 keywords:
   - UAV
   - Precision Landing
@@ -19,6 +19,6 @@ keywords:
   - ArduPilot
 license: Apache-2.0
 abstract: >
-  Scandium is a production-grade precision landing system designed for UAV and multirotor platforms. 
+  Nadir is a production-grade precision landing system designed for UAV and multirotor platforms. 
   It provides GNSS-denied navigation, optical flow odometry, and deep learning-based landability assessment
   integrated tightly with MAVLink autopilot systems.

@@ -1,7 +1,7 @@
-# Scandium
+# Nadir
 *Tags: `uav`, `precision-landing`, `computer-vision`, `autonomous-systems`, `px4`, `ardupilot`, `robotics`, `edge-ai`, `sensor-fusion`, `ekf`, `pytorch`*
-[![CI](https://github.com/emrealtindag/scandium/actions/workflows/ci.yml/badge.svg)](https://github.com/emrealtindag/scandium/actions/workflows/ci.yml)
-[![Security](https://github.com/emrealtindag/scandium/actions/workflows/security.yml/badge.svg)](https://github.com/emrealtindag/scandium/actions/workflows/security.yml)
+[![CI](https://github.com/emrealtindag/nadir/actions/workflows/ci.yml/badge.svg)](https://github.com/emrealtindag/nadir/actions/workflows/ci.yml)
+[![Security](https://github.com/emrealtindag/nadir/actions/workflows/security.yml/badge.svg)](https://github.com/emrealtindag/nadir/actions/workflows/security.yml)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
@@ -11,10 +11,10 @@
 ## Overview
 
 <p align="center">
-  <img src="benchmarks/landing_demo.gif" alt="Scandium EKF Precision Landing Demo" width="600"/>
+  <img src="benchmarks/landing_demo.gif" alt="Nadir EKF Precision Landing Demo" width="600"/>
 </p>
 
-**Scandium** is a production-grade precision landing system designed for Unmanned Aerial Vehicle (UAV) and multirotor platforms. The system operates as companion computer software that enables autonomous precision landing on fiducial markers (ArUco/AprilTag) by publishing MAVLink `LANDING_TARGET` messages to compatible autopilot systems including PX4 and ArduPilot.
+**Nadir** is a production-grade precision landing system designed for Unmanned Aerial Vehicle (UAV) and multirotor platforms. The system operates as companion computer software that enables autonomous precision landing on fiducial markers (ArUco/AprilTag) by publishing MAVLink `LANDING_TARGET` messages to compatible autopilot systems including PX4 and ArduPilot.
 
 This software package addresses the critical requirement for high-accuracy landing capabilities in scenarios where GNSS-based positioning proves insufficient, including indoor environments, GNSS-denied regions, and applications demanding sub-meter landing precision.
 
@@ -98,7 +98,7 @@ Comprehensive simulation environment support including Microsoft AirSim and Soft
 
 *Hardware Profile: NVIDIA Jetson Orin NX (ARM64) | Camera: 1080p @ 60 FPS*
 
-| Metric | Raw PnP (Baseline) | Scandium C++ EKF | Improvement |
+| Metric | Raw PnP (Baseline) | Nadir C++ EKF | Improvement |
 |--------|--------------------|------------------|-------------|
 | **Lateral Jitter (Hover)** | ±14.2 cm | ±8.1 cm | **42.9% reduction** |
 | **End-to-End Latency** | 45 ms | 22 ms (with TensorRT) | **51% faster** |
@@ -106,7 +106,7 @@ Comprehensive simulation environment support including Microsoft AirSim and Soft
 
 ## Hardware Reference (BOM)
 
-To deploy Scandium in a real-world scenario, the following hardware architecture is recommended:
+To deploy Nadir in a real-world scenario, the following hardware architecture is recommended:
 - **Companion Computer**: NVIDIA Jetson Orin NX (or Raspberry Pi 5 for CPU-only deployments)
 - **Flight Controller**: CubeOrange+ or Pixhawk 6C (running PX4 1.14+ or ArduPilot 4.4+)
 - **Camera Sensor**: Global Shutter Camera (e.g., Arducam OV9281 or FLIR Blackfly S)
@@ -114,7 +114,7 @@ To deploy Scandium in a real-world scenario, the following hardware architecture
 
 ## Alternatives Comparison
 
-| Feature | Scandium | `apriltag_ros` + `precland` | PX4 Native Target Tracker |
+| Feature | Nadir | `apriltag_ros` + `precland` | PX4 Native Target Tracker |
 |---------|----------|-----------------------------|---------------------------|
 | **Sensor Fusion** | C++ EKF (Predicts through occlusion) | Typically requires external filter nodes | Internal EKF2 / Low-Pass Filter |
 | **Dynamic Obstacles** | Deep Learning (YOLO/Segmentation) | Not natively supported | Not natively supported |
@@ -165,14 +165,14 @@ curl -sSL https://install.python-poetry.org | python3 -
 
 ```bash
 # Clone the repository
-git clone https://github.com/emrealtindag/scandium.git
-cd scandium
+git clone https://github.com/emrealtindag/nadir.git
+cd nadir
 
 # Install dependencies via Poetry
 poetry install
 
 # Verify installation
-poetry run scandium version
+poetry run nadir version
 ```
 
 ### Development Installation
@@ -189,10 +189,10 @@ poetry run pre-commit install
 
 ```bash
 # Build Docker image
-docker build -f docker/Dockerfile -t scandium:latest .
+docker build -f docker/Dockerfile -t nadir:latest .
 
 # Run container
-docker run -it --rm scandium:latest scandium version
+docker run -it --rm nadir:latest nadir version
 ```
 
 ## Quick Start
@@ -201,13 +201,13 @@ docker run -it --rm scandium:latest scandium version
 
 ```bash
 # Execute with default configuration
-poetry run scandium run --config configs/default.yaml
+poetry run nadir run --config configs/default.yaml
 
 # Execute AirSim simulation demonstration
-poetry run scandium sim airsim --config configs/airsim_demo.yaml
+poetry run nadir sim airsim --config configs/airsim_demo.yaml
 
 # Execute system diagnostics
-poetry run scandium diagnostics --config configs/default.yaml
+poetry run nadir diagnostics --config configs/default.yaml
 ```
 
 ### ArduPilot SITL Integration
@@ -216,8 +216,8 @@ poetry run scandium diagnostics --config configs/default.yaml
 # Initialize ArduPilot SITL environment
 ./scripts/run_sitl_ardupilot.sh
 
-# Execute Scandium with ArduPilot configuration
-poetry run scandium run --config configs/ardupilot_sitl.yaml
+# Execute Nadir with ArduPilot configuration
+poetry run nadir run --config configs/ardupilot_sitl.yaml
 ```
 
 ### PX4 SITL Integration
@@ -226,17 +226,17 @@ poetry run scandium run --config configs/ardupilot_sitl.yaml
 # Initialize PX4 SITL environment
 ./scripts/run_sitl_px4.sh
 
-# Execute Scandium with PX4 configuration
-poetry run scandium run --config configs/px4_sitl.yaml
+# Execute Nadir with PX4 configuration
+poetry run nadir run --config configs/px4_sitl.yaml
 ```
 
 ## System Architecture
 
-The Scandium system architecture comprises four primary layers: Perception, Control, MAVLink I/O, and Simulation/Tooling.
+The Nadir system architecture comprises four primary layers: Perception, Control, MAVLink I/O, and Simulation/Tooling.
 
 ```mermaid
 flowchart TB
-    subgraph SCANDIUM["SCANDIUM SYSTEM"]
+    subgraph NADIR["NADIR SYSTEM"]
         subgraph Perception["Perception Layer"]
             VI["Video Ingest\n(Camera Source)"] --> FD["Fiducial Detector\n(ArUco/AprilTag)"]
             FD --> PE["Pose Estimator\n(solvePnP/EKF)"]
@@ -255,7 +255,7 @@ flowchart TB
     
     LT --> AP["Autopilot\n(PX4/ArduPilot)"]
     
-    style SCANDIUM fill:#1a1a2e,stroke:#16213e,color:#fff
+    style NADIR fill:#1a1a2e,stroke:#16213e,color:#fff
     style Perception fill:#0f3460,stroke:#16213e,color:#fff
     style Control fill:#533483,stroke:#16213e,color:#fff
     style MAVLink fill:#e94560,stroke:#16213e,color:#fff
@@ -280,7 +280,7 @@ Configuration management utilizes YAML files with Pydantic schema validation. Th
 ```yaml
 # configs/default.yaml
 project:
-  name: "Scandium"
+  name: "Nadir"
   run_id: "auto"
   mode: "sitl"
   log_level: "INFO"
@@ -342,7 +342,7 @@ Comprehensive configuration documentation is available at [docs/configuration.md
 
 ## Documentation
 
-Complete documentation is available at [scandium-oss.github.io/scandium](https://scandium-oss.github.io/scandium).
+Complete documentation is available at [nadir-oss.github.io/nadir](https://nadir-oss.github.io/nadir).
 
 | Document | Description |
 |----------|-------------|
@@ -407,7 +407,7 @@ poetry run pytest tests/unit/ -v
 poetry run pytest tests/integration/ -v
 
 # Execute with coverage reporting
-poetry run pytest --cov=src/scandium --cov-report=html
+poetry run pytest --cov=src/nadir --cov-report=html
 ```
 
 ### Test Categories
@@ -430,7 +430,7 @@ The project utilizes GitHub Actions for continuous integration. All pull request
 
 ## Known Limitations & Roadmap
 
-While Scandium is designed for production-grade robustness, the following technical limitations exist in the current open-source release:
+While Nadir is designed for production-grade robustness, the following technical limitations exist in the current open-source release:
 1. **Sensor Fusion Boundary**: The C++ EKF currently assumes a constant velocity kinematic model. Upgrading to an IMM (Interacting Multiple Model) filter for the DESCEND to TOUCHDOWN transition phase is planned.
 2. **Hardware Verification**: The system is validated extensively on WSL2/SITL and AirSim. Real-world edge testing on NVIDIA Jetson Orin NX is on the roadmap but not fully certified.
 3. **RANSAC CPU Overhead**: The integration of VINS-Mono style Fundamental Matrix RANSAC for optical flow outlier rejection introduces additional CPU overhead. On low-end companions (e.g., Raspberry Pi 4), frame rates may drop during dense feature tracking.
@@ -495,4 +495,4 @@ This project utilizes the following open-source components:
 
 ---
 
-**Scandium** - Precision Landing System for Autonomous Aerial Platforms
+**Nadir** - Precision Landing System for Autonomous Aerial Platforms

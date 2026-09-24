@@ -1,5 +1,5 @@
 #!/bin/bash
-# PX4 SITL Launcher for Scandium
+# PX4 SITL Launcher for Nadir
 #
 # Launches PX4 SITL with Gazebo simulation for precision landing
 # development and testing.
@@ -39,7 +39,7 @@ HOME_ALT=584
 # ==============================================================================
 
 show_help() {
-    echo "PX4 SITL Launcher for Scandium"
+    echo "PX4 SITL Launcher for Nadir"
     echo ""
     echo "Usage: $0 [options]"
     echo ""

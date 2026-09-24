@@ -34,7 +34,7 @@ def generate_landing_gif():
     fig, ax = plt.subplots(figsize=(8, 8))
     ax.set_xlim(-6, 6)
     ax.set_ylim(-6, 6)
-    ax.set_title("Scandium EKF Precision Landing Simulation", fontsize=14, fontweight='bold')
+    ax.set_title("Nadir EKF Precision Landing Simulation", fontsize=14, fontweight='bold')
     ax.set_xlabel("X Distance (meters)")
     ax.set_ylabel("Y Distance (meters)")
     ax.grid(True, linestyle='--', alpha=0.6)
@@ -47,7 +47,7 @@ def generate_landing_gif():
     # Plot lines
     true_line, = ax.plot([], [], 'k--', alpha=0.5, label='True Trajectory')
     raw_scatter, = ax.plot([], [], 'ro', alpha=0.4, label='Raw Camera (Noisy)', markersize=6)
-    filt_line, = ax.plot([], [], 'b-', linewidth=3, label='Scandium EKF')
+    filt_line, = ax.plot([], [], 'b-', linewidth=3, label='Nadir EKF')
     
     # Current positions
     drone_raw, = ax.plot([], [], 'rX', markersize=12)

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Scandium Docker Entrypoint Script
+# Nadir Docker Entrypoint Script
 # Handles container initialization and signal management
 
 set -e
@@ -7,8 +7,8 @@ set -e
 # ------------------------------------------------------------------------------
 # Configuration
 # ------------------------------------------------------------------------------
-SCANDIUM_LOG_LEVEL="${SCANDIUM_LOG_LEVEL:-INFO}"
-SCANDIUM_LOG_FORMAT="${SCANDIUM_LOG_FORMAT:-json}"
+NADIR_LOG_LEVEL="${NADIR_LOG_LEVEL:-INFO}"
+NADIR_LOG_FORMAT="${NADIR_LOG_FORMAT:-json}"
 
 # ------------------------------------------------------------------------------
 # Signal Handlers
@@ -17,9 +17,9 @@ cleanup() {
     echo "[ENTRYPOINT] Received shutdown signal, cleaning up..."
 
     # Send SIGTERM to child processes
-    if [ -n "$SCANDIUM_PID" ]; then
-        kill -TERM "$SCANDIUM_PID" 2>/dev/null || true
-        wait "$SCANDIUM_PID" 2>/dev/null || true
+    if [ -n "$NADIR_PID" ]; then
+        kill -TERM "$NADIR_PID" 2>/dev/null || true
+        wait "$NADIR_PID" 2>/dev/null || true
     fi
 
     echo "[ENTRYPOINT] Cleanup complete"
@@ -40,9 +40,9 @@ preflight_checks() {
         exit 1
     fi
 
-    # Verify scandium installation
-    if ! command -v scandium &> /dev/null; then
-        echo "[ENTRYPOINT] ERROR: Scandium CLI not found"
+    # Verify nadir installation
+    if ! command -v nadir &> /dev/null; then
+        echo "[ENTRYPOINT] ERROR: Nadir CLI not found"
         exit 1
     fi
 
@@ -68,9 +68,9 @@ preflight_checks() {
 main() {
     preflight_checks "$@"
 
-    echo "[ENTRYPOINT] Starting Scandium..."
-    echo "[ENTRYPOINT] Log Level: $SCANDIUM_LOG_LEVEL"
-    echo "[ENTRYPOINT] Log Format: $SCANDIUM_LOG_FORMAT"
+    echo "[ENTRYPOINT] Starting Nadir..."
+    echo "[ENTRYPOINT] Log Level: $NADIR_LOG_LEVEL"
+    echo "[ENTRYPOINT] Log Format: $NADIR_LOG_FORMAT"
     echo "[ENTRYPOINT] Command: $@"
 
     # Execute the command

@@ -1,6 +1,6 @@
-# Scandium Build Instructions (C++ Core)
+# Nadir Build Instructions (C++ Core)
 
-The Scandium perception pipeline utilizes a high-performance C++ Extended Kalman Filter (EKF) bound to Python via `pybind11`. This ensures real-time deterministic sensor fusion (mitigating up to 40% high-frequency jitter) while maintaining a clean Python high-level API.
+The Nadir perception pipeline utilizes a high-performance C++ Extended Kalman Filter (EKF) bound to Python via `pybind11`. This ensures real-time deterministic sensor fusion (mitigating up to 40% high-frequency jitter) while maintaining a clean Python high-level API.
 
 ## Requirements
 - CMake >= 3.14
@@ -24,7 +24,7 @@ chmod +x scripts/build_cpp.sh
 ```
 
 3. Verification:
-The build script automatically places `scandium_ekf.so` (or `.pyd` on Windows) into `src/scandium/perception/`. 
+The build script automatically places `nadir_ekf.so` (or `.pyd` on Windows) into `src/nadir/perception/`. 
 You can verify it loads by running the unit tests:
 ```bash
 poetry run pytest tests/unit/test_ekf.py -v
@@ -33,12 +33,12 @@ poetry run pytest tests/unit/test_ekf.py -v
 ## Build Steps (Windows / MSVC)
 If building natively on Windows (though WSL2 is recommended for ROS/MAVLink compat):
 1. Open "x64 Native Tools Command Prompt for VS".
-2. Navigate to `src/scandium/cpp_core`.
+2. Navigate to `src/nadir/cpp_core`.
 3. Run:
 ```cmd
 mkdir build
 cd build
 cmake -G "Visual Studio 17 2022" -A x64 ..
 cmake --build . --config Release
-copy Release\scandium_ekf*.pyd ..\..\perception\
+copy Release\nadir_ekf*.pyd ..\..\perception\
 ```

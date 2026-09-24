@@ -1,11 +1,11 @@
 #!/bin/bash
 set -e
 
-echo "Building Scandium C++ Core (EKF)..."
+echo "Building Nadir C++ Core (EKF)..."
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-CPP_DIR="$PROJECT_ROOT/src/scandium/cpp_core"
+CPP_DIR="$PROJECT_ROOT/src/nadir/cpp_core"
 BUILD_DIR="$CPP_DIR/build"
 
 # Check if pybind11 is available

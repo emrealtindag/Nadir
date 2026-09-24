@@ -46,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial release of Scandium precision landing system
+- Initial release of Nadir precision landing system
 - ArUco marker detection with OpenCV backend
 - AprilTag marker detection support (optional dependency)
 - Camera-to-body frame coordinate transformations
@@ -92,9 +92,9 @@ This is the initial release. No upgrade path from previous versions.
 
 ## Links
 
-- [Repository](https://github.com/scandium-oss/scandium)
-- [Documentation](https://scandium-oss.github.io/scandium)
-- [Issue Tracker](https://github.com/scandium-oss/scandium/issues)
+- [Repository](https://github.com/nadir-oss/nadir)
+- [Documentation](https://nadir-oss.github.io/nadir)
+- [Issue Tracker](https://github.com/nadir-oss/nadir/issues)
 
-[Unreleased]: https://github.com/scandium-oss/scandium/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/scandium-oss/scandium/releases/tag/v0.1.0
+[Unreleased]: https://github.com/nadir-oss/nadir/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/nadir-oss/nadir/releases/tag/v0.1.0

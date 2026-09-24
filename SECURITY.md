@@ -8,12 +8,12 @@
 
 ## Reporting a Vulnerability
 
-We take security seriously. If you discover a security vulnerability within Scandium, please report it responsibly.
+We take security seriously. If you discover a security vulnerability within Nadir, please report it responsibly.
 
 ### How to Report
 
 1. **Do NOT** create a public GitHub issue for security vulnerabilities
-2. Email security concerns to: security@scandium-oss.example.com
+2. Email security concerns to: security@nadir-oss.example.com
 3. Include the following information:
    - Description of the vulnerability
    - Steps to reproduce
@@ -31,7 +31,7 @@ We take security seriously. If you discover a security vulnerability within Scan
 
 ### Flight Safety
 
-Scandium is designed for UAV precision landing systems. Security vulnerabilities in this context could have safety-critical implications:
+Nadir is designed for UAV precision landing systems. Security vulnerabilities in this context could have safety-critical implications:
 
 - **Marker Spoofing**: The system includes anti-spoofing measures (tag allowlist, size consistency checks)
 - **Communication Security**: MAVLink communication should be secured at the network level

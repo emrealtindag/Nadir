@@ -11,14 +11,14 @@ import sys
 import os
 
 # Add src to path so we can import the C++ module if it's compiled
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src/scandium/perception')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src/nadir/perception')))
 
 try:
-    import scandium_ekf
+    import nadir_ekf
     HAVE_EKF = True
 except ImportError:
     HAVE_EKF = False
-    print("WARNING: scandium_ekf not found. Benchmark will only show simulated noise.")
+    print("WARNING: nadir_ekf not found. Benchmark will only show simulated noise.")
 
 def run_benchmark():
     np.random.seed(42)
@@ -39,7 +39,7 @@ def run_benchmark():
     filtered_x, filtered_y, filtered_z = [], [], []
     
     if HAVE_EKF:
-        ekf = scandium_ekf.ExtendedKalmanFilter(dt, 0.5, noise_std**2)
+        ekf = nadir_ekf.ExtendedKalmanFilter(dt, 0.5, noise_std**2)
         ekf.reset([meas_x[0], meas_y[0], meas_z[0], 0, 0, 0])
         
         for i in range(steps):
@@ -65,7 +65,7 @@ def run_benchmark():
         plt.scatter(meas_x, meas_y, c='red', alpha=0.5, label='Noisy Sensor Data (Raw PnP)', s=20)
         plt.plot(filtered_x, filtered_y, 'b-', label=f'EKF Filtered Path (42% Jitter Reduction)', linewidth=2)
         
-        plt.title('Scandium Sensor Fusion: EKF vs Raw PnP Data in GNSS-Denied Simulation')
+        plt.title('Nadir Sensor Fusion: EKF vs Raw PnP Data in GNSS-Denied Simulation')
         plt.xlabel('X Position (meters)')
         plt.ylabel('Y Position (meters)')
         plt.legend(loc='best')
@@ -94,7 +94,7 @@ def run_benchmark():
         plt.scatter(meas_x, meas_y, c='red', alpha=0.5, label='Noisy Sensor Data (Raw PnP)', s=20)
         plt.plot(filtered_x, filtered_y, 'b-', label='EKF Filtered Path (Simulated)', linewidth=2)
         
-        plt.title('Scandium Sensor Fusion: EKF vs Raw PnP Data in GNSS-Denied Simulation')
+        plt.title('Nadir Sensor Fusion: EKF vs Raw PnP Data in GNSS-Denied Simulation')
         plt.xlabel('X Position (meters)')
         plt.ylabel('Y Position (meters)')
         plt.legend(loc='best')

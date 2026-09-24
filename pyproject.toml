@@ -1,13 +1,13 @@
 [tool.poetry]
-name = "scandium"
+name = "nadir"
 version = "0.1.0"
 description = "Production-grade precision landing system for UAV/drone platforms with fiducial marker detection and MAVLink integration"
-authors = ["Scandium Development Team"]
+authors = ["Nadir Development Team"]
 license = "Apache-2.0"
 readme = "README.md"
-homepage = "https://github.com/scandium-oss/scandium"
-repository = "https://github.com/scandium-oss/scandium"
-documentation = "https://scandium-oss.github.io/scandium"
+homepage = "https://github.com/nadir-oss/nadir"
+repository = "https://github.com/nadir-oss/nadir"
+documentation = "https://nadir-oss.github.io/nadir"
 keywords = ["uav", "drone", "precision-landing", "mavlink", "fiducial", "aruco", "apriltag"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -21,10 +21,10 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Typing :: Typed",
 ]
-packages = [{ include = "scandium", from = "src" }]
+packages = [{ include = "nadir", from = "src" }]
 
 [tool.poetry.scripts]
-scandium = "scandium.cli:app"
+nadir = "nadir.cli:app"
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -69,7 +69,7 @@ addopts = "-v --tb=short"
 filterwarnings = ["ignore::DeprecationWarning"]
 
 [tool.coverage.run]
-source = ["src/scandium"]
+source = ["src/nadir"]
 branch = true
 omit = ["*/tests/*", "*/__pycache__/*"]
 

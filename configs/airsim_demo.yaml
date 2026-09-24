@@ -1,8 +1,8 @@
-# Scandium AirSim Demo Configuration
+# Nadir AirSim Demo Configuration
 # Configuration optimized for AirSim simulation environment
 
 project:
-  name: Scandium
+  name: Nadir
   run_id: auto
   mode: airsim
   log_level: INFO

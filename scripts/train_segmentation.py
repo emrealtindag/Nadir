@@ -1,5 +1,5 @@
 """
-Deep Learning Segmentation Training Pipeline (PyTorch) for Scandium.
+Deep Learning Segmentation Training Pipeline (PyTorch) for Nadir.
 
 This script demonstrates advanced fine-tuning of a UNet/DeepLabV3 architecture
 for landing zone segmentation, utilizing PyTorch and torchvision.
