@@ -52,11 +52,11 @@ Camera-to-body frame coordinate transformation system utilizing Perspective-n-Po
 ### Flight Control: Advanced Guidance & B-Spline Trajectories
 Replacing legacy threshold-based FSM logic, the flight controller features an **Advanced Cascaded PID architecture with Feedforward Velocity Prediction** (heavily inspired by the kinematic constraints of Model Predictive Control horizons). During the final `DESCEND` phase, the system generates **3rd-order B-Spline trajectories**. This ensures the UAV follows a mathematically smooth polynomial curve to the touchdown zone, minimizing camera jitter caused by aggressive braking.
 
-### MAVLink Integration
-Native MAVLink protocol implementation for LANDING_TARGET message publishing. The system supports both UDP and serial transport layers, configurable publishing rates (10-50 Hz), and compatibility with PX4 and ArduPilot precision landing subsystems.
+### MAVLink Integration & Embedded Deployment
+Native MAVLink protocol implementation for LANDING_TARGET message publishing. Engineered for **real-time embedded deployment**, the system utilizes **C++17** for performance-critical filter paths and Python for high-level state orchestration. It supports both UDP and serial transport layers, configurable publishing rates (10-50 Hz), and compatibility with PX4 and ArduPilot precision landing subsystems.
 
 ### Advanced Deep Learning Landability Analysis (PyTorch)
-Computer vision-based landing zone safety assessment system. Powered by **PyTorch and Semantic Segmentation (DeepLabV3/UNet)**, the pipeline classifies the landing zone for obstacles and humans. The repository includes end-to-end ML fine-tuning scripts tailored for massive aerial datasets, exported natively to ONNXRuntime for ultra-low latency edge inference on companion computers.
+Computer vision-based landing zone safety assessment system implemented in `src/nadir/perception/landability`. Powered by **PyTorch and Semantic Segmentation (DeepLabV3/UNet)** and integrated YOLOv8 plugins (`yolo_plugin.py`), the pipeline classifies the landing zone for obstacles and humans. The repository includes end-to-end ML fine-tuning scripts exported natively to ONNXRuntime for ultra-low latency edge inference on companion computers.
 
 ### Finite State Machine & High-Level Autonomy
 Deterministic state machine implementation managing the complete autonomous landing sequence: INIT, IDLE, SEARCH, ACQUIRE, ALIGN, DESCEND, TOUCHDOWN, ABORT, and FAILSAFE states. State transitions are governed by rigid mathematical constraints ensuring fail-safe autonomy.
