@@ -226,7 +226,7 @@ curl -sSL https://install.python-poetry.org | python3 -
 
 ```bash
 # Clone the repository
-git clone https://github.com/emrealtindag/nadir.git
+git clone https://github.com/emrealtindag/Nadir.git
 cd nadir
 
 # Install dependencies via Poetry

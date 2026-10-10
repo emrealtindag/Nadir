@@ -11,17 +11,17 @@
 # -----------------------------------------------------------------------------
 
 site_name: Nadir Documentation
-site_description: Production-grade precision landing system for UAV platforms
-site_author: Nadir Development Team
-site_url: https://nadir-oss.github.io/nadir
+site_description: Autonomous precision landing system for UAV platforms
+site_author: Emre Altındağ
+site_url: https://github.com/emrealtindag/Nadir
 
 # Repository information
-repo_name: nadir-oss/nadir
-repo_url: https://github.com/nadir-oss/nadir
+repo_name: emrealtindag/Nadir
+repo_url: https://github.com/emrealtindag/Nadir
 edit_uri: edit/main/docs/
 
 # Copyright notice
-copyright: Copyright &copy; 2024-2025 Nadir Development Team
+copyright: Copyright &copy; 2026 Emre Altındağ
 
 # -----------------------------------------------------------------------------
 # Theme Configuration
@@ -156,8 +156,8 @@ markdown_extensions:
   - pymdownx.keys
   - pymdownx.magiclink:
       repo_url_shorthand: true
-      user: nadir-oss
-      repo: nadir
+      user: emrealtindag
+      repo: Nadir
   - pymdownx.mark
   - pymdownx.smartsymbols
   - pymdownx.superfences:
@@ -205,7 +205,7 @@ extra:
   # Social links
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/nadir-oss/nadir
+      link: https://github.com/emrealtindag/Nadir
       name: GitHub Repository
 
   # Version provider

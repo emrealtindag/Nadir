@@ -1,68 +1,23 @@
-# Security Policy
+# Security & Safety Policy
 
-## Supported Versions
+## Reporting Security Issues
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 0.1.x   | :white_check_mark: |
+If you discover a security vulnerability or flight-safety bug in Nadir, please report it directly via email:
 
-## Reporting a Vulnerability
+📧 **Contact**: [emrevaltn@gmail.com](mailto:emrevaltn@gmail.com)
 
-We take security seriously. If you discover a security vulnerability within Nadir, please report it responsibly.
+Please include:
+- Description of the issue or unexpected behavior
+- Steps or SITL scenario to reproduce
+- Affected modules (e.g., MAVLink framing, PnP estimator, FSM)
 
-### How to Report
+Reports are reviewed promptly and addressed in upcoming release commits.
 
-1. **Do NOT** create a public GitHub issue for security vulnerabilities
-2. Email security concerns to: security@nadir-oss.example.com
-3. Include the following information:
-   - Description of the vulnerability
-   - Steps to reproduce
-   - Potential impact
-   - Suggested fix (if any)
+## Avionics & Telemetry Security Considerations
 
-### What to Expect
+When deploying Nadir on physical companion computers (Jetson, Raspberry Pi) and autopilot datalinks:
 
-- **Acknowledgment**: We will acknowledge receipt within 48 hours
-- **Assessment**: We will assess the vulnerability within 7 days
-- **Resolution**: Critical vulnerabilities will be addressed within 30 days
-- **Disclosure**: We follow responsible disclosure practices
-
-## Security Considerations
-
-### Flight Safety
-
-Nadir is designed for UAV precision landing systems. Security vulnerabilities in this context could have safety-critical implications:
-
-- **Marker Spoofing**: The system includes anti-spoofing measures (tag allowlist, size consistency checks)
-- **Communication Security**: MAVLink communication should be secured at the network level
-- **Failsafe Behavior**: All error conditions default to safe autopilot behavior
-
-### Best Practices for Deployment
-
-1. **Network Isolation**: Run on isolated companion computer networks
-2. **Authenticated MAVLink**: Use MAVLink 2.0 signing when available
-3. **Configuration Validation**: Use the built-in config validation
-4. **Dependency Updates**: Regularly update dependencies (`poetry update`)
-5. **Logging**: Enable logging for audit trails
-
-## Security Scanning
-
-This project uses automated security scanning:
-
-- **pip-audit**: Dependency vulnerability scanning
-- **gitleaks**: Secret detection in commits
-- **Dependabot**: Automated dependency updates
-
-## Scope Limitations
-
-This software is designed for:
-- Flight safety
-- Safe recovery operations
-- Automatic landing
-- Operational reliability
-
-This software is **NOT** designed for and must **NOT** be used for:
-- Weaponization
-- Target engagement
-- Attack optimization
-- Any harmful purposes
+- **MAVLink 2.0 Signing**: Enable MAVLink packet signing on serial telemetry channels (`SERIALx_PROTOCOL = 2`) to prevent unauthorized command injection on unencrypted radios.
+- **Fiducial Tag Whitelisting**: Always configure `target_id_allowlist` in `configs/` to prevent tracking spurious or counterfeit markers in contested visual environments.
+- **Network Boundaries**: Keep companion computer telemetry ports (UDP 14550 / TCP 5760) bound to local or secured private radio links (e.g., dedicated point-to-point telemetry).
+- **Physical Rangefinder Redundancy**: Ensure 1D LiDAR (`DISTANCE_SENSOR`) is enabled to provide an independent physical ground-truth altitude gate for landing touchdown confirmation.

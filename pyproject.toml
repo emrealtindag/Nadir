@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "nadir"
 version = "0.1.0"
-description = "Production-grade precision landing system for UAV/drone platforms with fiducial marker detection and MAVLink integration"
-authors = ["Nadir Development Team"]
+description = "Precision landing system for UAV/drone platforms with fiducial marker detection, sensor fusion, and MAVLink integration"
+authors = ["Emre Altındağ <emrevaltn@gmail.com>"]
 license = "Apache-2.0"
 readme = "README.md"
-homepage = "https://github.com/nadir-oss/nadir"
-repository = "https://github.com/nadir-oss/nadir"
-documentation = "https://nadir-oss.github.io/nadir"
+homepage = "https://github.com/emrealtindag/Nadir"
+repository = "https://github.com/emrealtindag/Nadir"
+documentation = "https://github.com/emrealtindag/Nadir#readme"
 keywords = ["uav", "drone", "precision-landing", "mavlink", "fiducial", "aruco", "apriltag"]
 classifiers = [
     "Development Status :: 4 - Beta",

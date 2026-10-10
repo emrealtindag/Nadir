@@ -92,9 +92,8 @@ This is the initial release. No upgrade path from previous versions.
 
 ## Links
 
-- [Repository](https://github.com/nadir-oss/nadir)
-- [Documentation](https://nadir-oss.github.io/nadir)
-- [Issue Tracker](https://github.com/nadir-oss/nadir/issues)
+- [Repository](https://github.com/emrealtindag/Nadir)
+- [Issue Tracker](https://github.com/emrealtindag/Nadir/issues)
 
-[Unreleased]: https://github.com/nadir-oss/nadir/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/nadir-oss/nadir/releases/tag/v0.1.0
+[Unreleased]: https://github.com/emrealtindag/Nadir/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/emrealtindag/Nadir/releases/tag/v0.1.0

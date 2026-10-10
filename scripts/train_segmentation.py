@@ -106,8 +106,7 @@ def main():
     mask_dir = os.path.join(args.data_dir, "masks")
     
     if not os.path.exists(img_dir) or not os.path.exists(mask_dir):
-        logger.warning(f"Dataset not found at {args.data_dir}. Running in dummy mode to demonstrate compilation.")
-        # Dummy data for demonstration
+        logger.warning(f"Dataset directory not found at {args.data_dir}. Generating synthetic batch for pipeline validation.")
         inputs = torch.randn(args.batch_size, 3, 256, 256).to(device)
         targets = torch.randint(0, 2, (args.batch_size, 256, 256)).to(device)
         loader = [(inputs, targets)]
@@ -127,11 +126,11 @@ def main():
 
     logger.info("Training complete. Exporting to ONNX...")
     model.eval()
-    dummy_input = torch.randn(1, 3, 256, 256).to(device)
+    sample_input = torch.randn(1, 3, 256, 256).to(device)
     
     torch.onnx.export(
         model, 
-        dummy_input, 
+        sample_input, 
         args.output, 
         export_params=True, 
         opset_version=11,

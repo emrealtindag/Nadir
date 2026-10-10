@@ -14,7 +14,7 @@ Please maintain a respectful, constructive, and inclusive tone across all intera
 
 1. **Fork and Clone**:
    ```bash
-   git clone https://github.com/emrealtindag/nadir.git
+   git clone https://github.com/emrealtindag/Nadir.git
    cd nadir
    ```
 

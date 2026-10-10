@@ -24,6 +24,7 @@ Nadir is companion computer software engineered to solve the problem of high-acc
 - [PX4 Autopilot Integration](px4.md)
 - [Simulation Environments](simulation.md)
 - [Landability Analysis](landability.md)
+- [YOLOv8 Model Card](model_card.md)
 - [Configuration Reference](configuration.md)
 - [Testing & Quality Assurance](testing.md)
 - [Deployment & Companion Computers](deployment.md)
