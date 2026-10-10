@@ -17,7 +17,7 @@ from nadir.version import __version__
 
 app = typer.Typer(
     name="nadir",
-    help="Nadir - Production-grade precision landing system for UAV platforms.",
+    help="Nadir - Precision landing system for UAV platforms.",
     add_completion=False,
 )
 
