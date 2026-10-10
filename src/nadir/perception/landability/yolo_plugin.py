@@ -21,12 +21,13 @@ from nadir.perception.landability.base import (
     extract_roi,
 )
 
-CLASS_NAMES_DEFAULT = {0: "Tasit", 1: "Insan", 2: "UAP", 3: "UAI"}
+CLASS_NAMES_DEFAULT = {0: "Tasit", 1: "Insan"}
 
 
 class YOLOLandabilityPlugin(ILandabilityEstimator):
     """
     YOLO-based dynamic obstacle and human detector for landing zone safety.
+    Strictly filters detections to Tasit (vehicles) and Insan (humans).
     """
 
     def __init__(
@@ -63,10 +64,8 @@ class YOLOLandabilityPlugin(ILandabilityEstimator):
         try:
             self._model = YOLO(resolved)
             self._initialized = True
-            if hasattr(self._model, "names") and self._model.names:
-                self._class_names = dict(self._model.names)
-            else:
-                self._class_names = CLASS_NAMES_DEFAULT
+            # Strictly restrict supported classes to Tasit (0) and Insan (1)
+            self._class_names = {0: "Tasit", 1: "Insan"}
         except Exception:
             self._initialized = False
             self._class_names = CLASS_NAMES_DEFAULT
@@ -101,14 +100,22 @@ class YOLOLandabilityPlugin(ILandabilityEstimator):
                     roi_center[1] + roi_size[1] / 2.0,
                 )
 
-            names_dict = getattr(self, "_class_names", None) or getattr(self._model, "names", CLASS_NAMES_DEFAULT)
-
             for box in results[0].boxes:
                 conf = float(box.conf[0])
                 cls_id = int(box.cls[0].item()) if hasattr(box.cls[0], 'item') else int(box.cls[0])
                 coords = box.xyxy[0]
                 x1, y1, x2, y2 = coords.tolist() if hasattr(coords, 'tolist') else list(coords)
-                cls_name = names_dict.get(cls_id, str(cls_id))
+
+                # Inspect raw model label if available
+                raw_label = ""
+                if hasattr(self._model, "names") and isinstance(self._model.names, dict):
+                    raw_label = str(self._model.names.get(cls_id, "")).lower()
+
+                # Strictly filter: ONLY Tasit (0) and Insan (1) are allowed
+                is_tasit = (cls_id == 0) or ("tasit" in raw_label) or ("car" in raw_label) or ("vehicle" in raw_label)
+                is_insan = (cls_id == 1) or ("insan" in raw_label) or ("person" in raw_label) or ("human" in raw_label)
+                if not (is_tasit or is_insan):
+                    continue
 
                 if conf > self._conf_threshold:
                     intersects = False
@@ -118,23 +125,20 @@ class YOLOLandabilityPlugin(ILandabilityEstimator):
                         if (overlap_x * overlap_y) > 0.0:
                             intersects = True
 
-                    # 0: Tasit, 1: Insan are hazardous obstacles
-                    # (2: UAP, 3: UAI are landing pad / area markers, not hazards)
-                    is_obstacle = cls_id in (0, 1) or cls_name.lower() in ("tasit", "insan", "car", "vehicle", "person", "people")
+                    canonical_name = "Insan" if is_insan else "Tasit"
+                    canonical_id = 1 if is_insan else 0
 
-                    boxes_out.append((x1, y1, x2, y2, conf, cls_id, cls_name, intersects))
+                    boxes_out.append((x1, y1, x2, y2, conf, canonical_id, canonical_name, intersects))
+                    obstacle_detected = True
+                    if conf > highest_conf:
+                        highest_conf = conf
 
-                    if is_obstacle:
-                        obstacle_detected = True
-                        if conf > highest_conf:
-                            highest_conf = conf
-
-                        if intersects:
-                            obstacle_in_zone = True
-                            if cls_id == 1 or cls_name.lower() in ("insan", "person", "people"):
-                                human_in_zone = True
-                            else:
-                                vehicle_in_zone = True
+                    if intersects:
+                        obstacle_in_zone = True
+                        if is_insan:
+                            human_in_zone = True
+                        else:
+                            vehicle_in_zone = True
 
             flags: set[str] = set()
             score = 1.0

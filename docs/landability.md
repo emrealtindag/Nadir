@@ -13,7 +13,7 @@ The landability analysis subsystem (`src/nadir/perception/landability`) assesses
         ▼                                 ▼
    ArUco / AprilTag                YOLOv8 Detection
    Fiducial PnP Pose              (`yolo_plugin.py`)
-        │                           [best.pt: Tasit, Insan, UAP, UAI]
+        │                           [best.pt: Tasit, Insan]
         ▼                                 │
 Landing Target ROI Box                    ▼
  [Center, 2.5x Marker Size]        Obstacle Bounding Boxes
@@ -39,16 +39,16 @@ FSM: ABORT             FSM: ABORT
 
 ---
 
-## 1. Multi-Class Object Categorization (`weights/best.pt`)
+## 1. Object Categorization (`weights/best.pt`)
 
-The fine-tuned YOLOv8 weights contain 4 distinct object classes:
+The perception subsystem strictly filters detections to two primary obstacle classes:
 
 | Class ID | Class Label | Subsystem Role | Behavior on Pad Intersection |
 |:--------:|:-----------:|:--------------:|:----------------------------|
-| **0** | `Tasit` (Vehicle / Car) | Dynamic Obstacle | Sets `score = 0.20`, raises `vehicle_present` & `obstacle_in_landing_zone` $\rightarrow$ FSM `ABORT` |
-| **1** | `Insan` (Human / Person) | Critical Personnel Hazard | Sets `score = 0.00`, raises `human_present` & `obstacle_in_landing_zone` $\rightarrow$ FSM `ABORT` (human priority) |
-| **2** | `UAP` (Uçak/İHA İniş Alanı) | Designated Landing Platform | Visual validation for target platform |
-| **3** | `UAI` (İniş Alanı) | Touchdown Zone | Visual boundary confirmation |
+| **0** | `Tasit` (Vehicle / Car) | Dynamic Obstacle | Sets `score = 0.20`, raises `vehicle_present` & `obstacle_in_landing_zone` $\rightarrow$ FSM `ABORT` (collision risk) |
+| **1** | `Insan` (Human / Person) | Critical Personnel Hazard | Sets `score = 0.00`, raises `human_present` & `obstacle_in_landing_zone` $\rightarrow$ FSM `ABORT` (zero tolerance) |
+
+*Note: Any other detection classes outside `Tasit` and `Insan` are strictly filtered out by the inference pipeline to ensure zero false positives.*
 
 ---
 
