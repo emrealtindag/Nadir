@@ -54,7 +54,7 @@ The repository includes complete, reproducible Software-In-The-Loop (SITL) demon
 |----------|--------------|--------------------------------|
 | **00:00 – 00:15** | Autonomous Takeoff | MAVProxy `GUIDED> takeoff 10` executes vertical climb to 10m AGL, with altitude tracked via MAVLink LiDAR telemetry. |
 | **00:15 – 00:35** | Waypoint Navigation | Switch to `AUTO` mode; aircraft navigates along runway corridor approaching the landing zone. |
-| **00:35 – 00:48** | Target Lock & HUD Acquisition | Downward-facing camera enters pad FOV. Nadir AI HUD locks ArUco fiducial marker, solves 3D PnP pose, and activates tracking gates. |
+| **00:35 – 00:48** | Target Lock & Clearance Check | Downward camera enters pad FOV. Nadir AI HUD locks ArUco marker, solves 3D PnP pose, and runs YOLOv8 spatial clearance (verifying runway vehicle does not intersect landing pad). |
 | **00:48 – 00:58** | Precision Descent & Touchdown | Nadir overrides flight mode to ArduCopter `LAND` (Mode 9) and streams high-rate `LANDING_TARGET` messages in `MAV_FRAME_BODY_FRD`, achieving center-pad touchdown (< 16 cm error). |
 
 <p align="center">
@@ -92,10 +92,12 @@ Replacing legacy threshold-based FSM logic, the flight controller features a **C
 ### MAVLink Integration & Real-Time Telemetry
 Native MAVLink protocol implementation for `LANDING_TARGET` message publishing (Frame: `MAV_FRAME_BODY_FRD = 12`). Engineered for embedded deployment, supporting both UDP/TCP and serial UART transport layers, configurable publishing rates (10-50 Hz), and automated autopilot mode command overrides (`LAND` mode 9).
 
-### Modular Landability & Obstacle Assessment (PyTorch / YOLOv8)
+### Modular Landability & Spatial Obstacle Rejection (PyTorch / YOLOv8)
 Vision-based landing zone safety assessment implemented in `src/nadir/perception/landability`:
-- **Heuristic Surface Variance**: Analyzes texture entropy and motion consistency across the landing area.
-- **Deep Learning Plugin**: Integrates YOLOv8 (`weights/best.pt`) and segmentation models to classify landing pads, obstacles, and humans before final descent authorization.
+- **Spatial Clearance & Intersection Gating**: Evaluates spatial overlap between detected ground obstacles (vehicles, humans) and the landing zone Region of Interest (ROI). If an obstacle intersects or encroaches upon the landing pad perimeter, the landability score instantly drops below `abort_landability` (0.40), commanding the FSM into an immediate `ABORT` (Go-Around) to prevent touchdown on top of the obstacle.
+- **Runway Vehicle Validation**: In the Gazebo simulation scenario, a vehicle is present along the approach runway. The perception system actively monitors ground objects; because the vehicle maintains safe clearance outside the landing pad's target perimeter, the zone is verified as clear, authorizing final precision descent.
+- **Deep Learning Pipeline**: Integrates custom-trained YOLOv8 models (`weights/best.pt`) and semantic segmentation with sub-millisecond inference and automated bounding box HUD visualizers.
+- **Heuristic Surface Variance**: Fallback estimator evaluating surface texture variance and dense optical flow motion consistency.
 
 ### Finite State Machine & High-Level Autonomy
 Deterministic state machine implementation managing the complete autonomous landing sequence: INIT, IDLE, SEARCH, ACQUIRE, ALIGN, DESCEND, TOUCHDOWN, ABORT, and FAILSAFE states. State transitions are governed by rigid mathematical constraints ensuring fail-safe autonomy.

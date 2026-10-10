@@ -343,19 +343,36 @@ def run(
 
                 # Run YOLO for landability / visualization
                 landability_score = 1.0
+                target_roi_center = None
+                target_roi_size = None
+                if target_visible and detections:
+                    det0 = detections[0]
+                    target_roi_center = (int(det0.center[0]), int(det0.center[1]))
+                    c = det0.corners
+                    w_px = float(np.linalg.norm(c[0] - c[1]))
+                    h_px = float(np.linalg.norm(c[1] - c[2]))
+                    side_px = int(max(w_px, h_px) * 2.5)
+                    target_roi_size = (side_px, side_px)
+
                 if yolo_plugin.is_initialized:
-                    yolo_res = yolo_plugin.estimate(frame)
+                    yolo_res = yolo_plugin.estimate(
+                        frame,
+                        roi_center=target_roi_center,
+                        roi_size=target_roi_size,
+                    )
                     landability_score = yolo_res.score
+                    is_collision = yolo_res.debug.get("obstacle_in_zone", False)
                     if "boxes" in yolo_res.debug:
                         for box in yolo_res.debug["boxes"]:
                             x1, y1, x2, y2, conf, cls = box
-                            cv2.rectangle(hud_frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 0, 255), 2)
-                            cv2.putText(hud_frame, f"Obj: {conf:.2f}", (int(x1), int(y1)-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+                            box_color = (0, 0, 255) if is_collision else (0, 165, 255)
+                            cv2.rectangle(hud_frame, (int(x1), int(y1)), (int(x2), int(y2)), box_color, 2)
+                            lbl = f"COLLISION OBJ: {conf:.2f}" if is_collision else f"CLEAR OBJ: {conf:.2f}"
+                            cv2.putText(hud_frame, lbl, (int(x1), int(y1)-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, box_color, 2)
                             
-                            # Draw crosshair for YOLO object if desired
                             cx = int((x1 + x2)/2)
                             cy = int((y1 + y2)/2)
-                            cv2.drawMarker(hud_frame, (cx, cy), (0, 165, 255), cv2.MARKER_CROSS, 20, 2)
+                            cv2.drawMarker(hud_frame, (cx, cy), box_color, cv2.MARKER_CROSS, 20, 2)
 
                 # Show the HUD
                 cv2.imshow("Nadir AI HUD", hud_frame)
