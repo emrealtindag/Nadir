@@ -59,3 +59,10 @@ runs/
 *.bin
 *.log
 *.sdp
+
+# Temporary scratch & recording files
+inishareketigif.gif
+*.tmp
+*.temp
+scratch/
+

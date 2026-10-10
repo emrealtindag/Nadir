@@ -12,7 +12,6 @@ This directory contains standalone scripts for simulation, calibration, training
 | **`calibrate_camera.py`** | Interactive camera intrinsics calibration tool using checkerboard patterns. |
 | **`gen_aruco.py`** | Generates high-contrast ArUco and fiducial markers for physical prints and simulation textures. |
 | **`generate_demo_gif.py`** | Generates HUD demonstration GIF animations from saved frames. |
-| **`object_detection_model.py`** | Custom aero-thermal object detection and multi-frame tracking implementation. |
 | **`run_sitl_ardupilot.sh`** | Shell launcher for ArduPilot SITL multirotor simulation. |
 | **`run_sitl_px4.sh`** | Shell launcher for PX4 SITL multirotor simulation. |
 | **`train_segmentation.py`** | PyTorch training pipeline for semantic segmentation of safe landing terrain. |
