@@ -38,7 +38,10 @@ pose:
     min_tag_area_px: 800
 
 mavlink:
-  transport: udp
+  transport: tcp
+  tcp:
+    address: "127.0.0.1"
+    port: 5762
   udp:
     address: "127.0.0.1"
     port: 14550

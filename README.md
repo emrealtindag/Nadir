@@ -78,11 +78,17 @@ Features a cascaded guidance controller with feedforward velocity prediction. Du
 Publishes `LANDING_TARGET` messages (`MAV_FRAME_BODY_FRD = 12`) over UDP, TCP, or serial UART (10-50 Hz) and handles autopilot mode transitions (switching to ArduCopter `LAND` mode 9 on target lock).
 
 ### Obstacle Clearance & Spatial Gating (YOLOv8)
+
+<p align="center">
+  <img src="benchmarks/car_and_safeland.gif" alt="Nadir Gazebo SITL Autonomous Obstacle Clearance and BRAKE Safety Abort Demo" width="700"/>
+</p>
+
 Landing zone safety assessment implemented in `src/nadir/perception/landability` (documented in detail in the [YOLOv8 Landability Model Card](docs/model_card.md)):
 - **Targeted Obstacle Assessment (`weights/best.pt`)**: Real-time neural network inference detecting two primary obstacle classes: `0: Tasit` (Vehicle) and `1: Insan` (Person).
 - **Spatial Clearance Gating**: Evaluates 2D spatial overlap between detected objects and the landing zone Region of Interest (ROI).
   - **Personnel Presence (`Insan`)**: Zero-tolerance rule setting `score = 0.00` and raising `human_present`, commanding the FSM into an immediate `ABORT` (Go-Around).
   - **Vehicle Overlap (`Tasit`)**: Spatial intersection drops landability score to `0.20` ($< 0.40$ threshold), aborting landing due to collision hazard.
+- **Autopilot Safety Override (`BRAKE` Mode 17)**: When an obstacle encroaches on the pad, Nadir commands ArduPilot into `BRAKE` mode (Mode 17) via MAVLink, instantly halting forward velocity, locking current altitude (11m AGL), and maintaining a stable hover without descending or auto-disarming.
 - **Runway Vehicle Validation**: In the Gazebo simulation, a vehicle on the runway corridor outside the landing pad is tracked; since it maintains clearance outside the pad perimeter ($\text{Intersection} = 0$), the zone is verified as clear (`score = 1.0`), authorizing precision descent.
 - **Heuristic Surface Variance**: Fallback estimator evaluating surface texture variance and optical flow consistency.
 
