@@ -2,9 +2,11 @@
 
 ### Autonomous Precision Landing System for UAVs & Multirotors
 
+[![C++17](https://img.shields.io/badge/C%2B%2B-17-00599C?logo=c%2B%2B)](src/nadir/cpp_core/)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![pybind11](https://img.shields.io/badge/pybind11-bound-blueviolet.svg)](src/nadir/cpp_core/pybind_wrapper.cpp)
 [![CI](https://img.shields.io/badge/CI-passing-brightgreen.svg)](https://github.com/emrealtindag/Nadir/actions)
 [![Security](https://img.shields.io/badge/Security-passing-brightgreen.svg)](SECURITY.md)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
@@ -191,7 +193,10 @@ Before a live hardware-in-the-loop (HITL) or physical flight test, ensure:
 
 | Component | Minimum Version | Recommended Version |
 |-----------|-----------------|---------------------|
+| C++ Compiler | C++17 (GCC 9+ / Clang 10+ / MSVC 2019+) | GCC 12+ / Clang 15+ |
+| CMake | 3.14 | 3.28+ |
 | Python | 3.11 | 3.12 |
+| pybind11 | 2.11.0 | Latest |
 | OpenCV | 4.9.0 | 4.10.0 |
 | NumPy | 1.26.0 | 1.26.4 |
 | pymavlink | 2.4.41 | Latest |

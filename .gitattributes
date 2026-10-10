@@ -1,0 +1,11 @@
+# GitHub Linguist Language Detection Configuration
+# Ensure C++ Core and Python are accurately detected and highlighted
+
+simulation/** linguist-vendored
+weights/** linguist-vendored
+docs/** linguist-documentation
+benchmarks/** linguist-documentation
+
+src/nadir/cpp_core/*.cpp linguist-language=C++
+src/nadir/cpp_core/*.h linguist-language=C++
+src/nadir/cpp_core/CMakeLists.txt linguist-language=CMake
