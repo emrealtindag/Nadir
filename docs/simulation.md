@@ -39,6 +39,6 @@ For testing without running heavy 3D simulation engines, Nadir can ingest pre-re
 ```yaml
 camera:
   source: video_file
-  path: "donerkanatlihassasinis.mp4"
+  path: "nadir_gazebo_sitl_demo.mp4"
   loop: true
 ```

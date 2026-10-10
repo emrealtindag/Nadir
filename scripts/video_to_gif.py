@@ -78,7 +78,7 @@ def convert_video_to_gif(
 
 if __name__ == "__main__":
     convert_video_to_gif(
-        video_path="donerkanatlihassasinis.mp4",
+        video_path="nadir_gazebo_sitl_demo.mp4",
         output_path="benchmarks/landing_demo.gif",
         start_sec=0.0,
         end_sec=58.5,
