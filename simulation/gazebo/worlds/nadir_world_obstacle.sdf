@@ -82,10 +82,11 @@
               <size>200 200</size>
             </plane>
           </geometry>
-        </material>
-          <ambient>0.4 0.6 0.4 1</ambient>
-          <diffuse>0.4 0.6 0.4 1</diffuse>
-          <specular>0.1 0.1 0.1 1</specular>
+          <material>
+            <ambient>0.4 0.6 0.4 1</ambient>
+            <diffuse>0.4 0.6 0.4 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+          </material>
         </visual>
       </link>
     </model>
