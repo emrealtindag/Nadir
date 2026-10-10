@@ -4,7 +4,7 @@
 
 If you discover a security vulnerability or flight-safety bug in Nadir, please report it directly via email:
 
-📧 **Contact**: [emrevaltn@gmail.com](mailto:emrevaltn@gmail.com)
+**Contact**: [emrevaltn@gmail.com](mailto:emrevaltn@gmail.com)
 
 Please include:
 - Description of the issue or unexpected behavior

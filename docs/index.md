@@ -1,6 +1,6 @@
 # Nadir Documentation
 
-Welcome to the official technical documentation for **Nadir**, a production-grade precision landing system for autonomous multirotor and Unmanned Aerial Vehicle (UAV) platforms.
+Technical documentation for **Nadir**, a vision-based precision landing system for autonomous multirotor UAV platforms.
 
 ---
 

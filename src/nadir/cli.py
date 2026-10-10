@@ -420,7 +420,7 @@ def run(
                                 5,
                             )
                             conn.set_mode(5)
-                            console.print("[bold red]>>> ABORT TRIGGERED! SWITCHING ARDUPILOT TO LOITER (SAFETY GO-AROUND) <<<[/bold red]")
+                            console.print("[bold red][ABORT][/bold red] Safety abort triggered: switching ArduPilot to LOITER")
                     except Exception as ex:
                         console.print(f"[red]Failed to execute ABORT command:[/red] {ex}")
 
@@ -455,8 +455,8 @@ def run(
 
                                 land_commands_sent += 1
                                 if land_commands_sent == 1:
-                                    console.print("[bold red]>>> TARGET LOCKED! FORCING ARDUPILOT INTO LAND MODE (MODE 9) <<<[/bold red]")
-                                    console.print("[bold green]>>> CUTTING FORWARD FLIGHT - INITIATING VERTICAL PRECISION DESCENT! <<<[/bold green]")
+                                    console.print("[bold cyan][AUTOPILOT][/bold cyan] Target locked: switching ArduPilot to LAND mode (Mode 9)")
+                                    console.print("[bold green][GUIDANCE][/bold green] Initiating vertical precision descent and target tracking")
                         except Exception as ex:
                             console.print(f"[red]Failed to send LAND mode:[/red] {ex}")
 

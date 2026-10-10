@@ -2,15 +2,10 @@
 
 ### Autonomous Precision Landing System for UAVs & Multirotors
 
-[![C++17](https://img.shields.io/badge/C%2B%2B-17-00599C?logo=c%2B%2B)](src/nadir/cpp_core/)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![C++17](https://img.shields.io/badge/C%2B%2B-17-00599C?logo=c%2B%2B)](src/nadir/cpp_core/)
 [![pybind11](https://img.shields.io/badge/pybind11-bound-blueviolet.svg)](src/nadir/cpp_core/pybind_wrapper.cpp)
-[![CI](https://img.shields.io/badge/CI-passing-brightgreen.svg)](https://github.com/emrealtindag/Nadir/actions)
-[![Security](https://img.shields.io/badge/Security-passing-brightgreen.svg)](SECURITY.md)
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 ## Overview
 
@@ -18,35 +13,30 @@
   <img src="benchmarks/landing_demo.gif" alt="Nadir Gazebo SITL Autonomous Precision Landing Demo" width="700"/>
 </p>
 
-**Nadir** is an SITL-validated autonomous precision landing system designed for Unmanned Aerial Vehicle (UAV) and multirotor platforms. Operating as companion computer software, Nadir enables autonomous precision landing on fiducial markers (ArUco/AprilTag) with multi-sensor fusion (**Camera PnP, Exponential Smoothing / C++ EKF, and 1D LiDAR Rangefinder altimetry**) by publishing MAVLink `LANDING_TARGET` messages to compatible autopilot systems including ArduPilot and PX4.
+**Nadir** is an autonomous precision landing system for multirotor UAVs, validated in Gazebo SITL. Running on a companion computer (such as an NVIDIA Jetson or Raspberry Pi), it detects visual landing markers (ArUco / AprilTag), fuses pose measurements (Camera PnP, Exponential Smoothing / C++ EKF, and 1D LiDAR rangefinder), verifies pad clearance with YOLOv8, and publishes MAVLink `LANDING_TARGET` messages to guide ArduPilot or PX4 to a centered touchdown.
 
-This software package addresses the critical requirement for high-accuracy landing capabilities in scenarios where GNSS-based positioning proves insufficient, including indoor environments, GNSS-denied regions, and applications demanding sub-meter landing precision.
+The system is designed for GNSS-denied environments, rooftop pads, or docking stations where standard GPS drift (1-2 m) prevents safe recovery.
 
 ## Table of Contents
 
 - [Overview](#overview)
-- [SITL Flight Demonstration & Video Verification](#sitl-flight-demonstration--video-verification)
+- [SITL Flight Demonstration](#sitl-flight-demonstration)
 - [Key Capabilities](#key-capabilities)
-- [Performance Benchmarks & Empirical Methodology](#performance-benchmarks--empirical-methodology)
+- [Performance Benchmarks](#performance-benchmarks--empirical-methodology)
 - [Hardware Reference (BOM)](#hardware-reference-bom)
 - [Alternatives Comparison](#alternatives-comparison)
-- [Field Deployment Checklist](#field-deployment-checklist)
 - [System Requirements](#system-requirements)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [System Architecture](#system-architecture)
 - [Configuration](#configuration)
 - [Documentation](#documentation)
-- [Build Instructions](BUILD.md)
-- [Development](#development)
-- [Testing](#testing)
-- [Safety & Operational Compliance](#safety--operational-compliance)
+- [Safety & Failsafes](#safety--failsafe-architecture)
 - [License](#license)
-- [Contributing](#contributing)
 
-## SITL Flight Demonstration & Video Verification
+## SITL Flight Demonstration
 
-The repository includes complete, reproducible Software-In-The-Loop (SITL) demonstration proof (**`nadir_gazebo_sitl_demo.mp4`**) demonstrating end-to-end autonomous mission execution in **Gazebo Harmonic + ArduPilot SITL** executed via [`configs/gazebo_demo.yaml`](configs/gazebo_demo.yaml):
+A full Software-In-The-Loop (SITL) flight sequence is provided in [`nadir_gazebo_sitl_demo.mp4`](nadir_gazebo_sitl_demo.mp4), recorded in **Gazebo Harmonic + ArduPilot SITL** with [`configs/gazebo_demo.yaml`](configs/gazebo_demo.yaml):
 
 <p align="center">
   <img src="benchmarks/landing_demo.gif" alt="Nadir Gazebo SITL Autonomous Precision Landing Demo" width="700"/>
@@ -61,43 +51,43 @@ The repository includes complete, reproducible Software-In-The-Loop (SITL) demon
 | **00:35 – 00:48** | Target Lock & Clearance Check | Downward camera enters pad FOV. Nadir AI HUD locks ArUco marker, solves 3D PnP pose, and runs YOLOv8 spatial clearance (verifying runway vehicle does not intersect landing pad). |
 | **00:48 – 00:58** | Precision Descent & Touchdown | Nadir overrides flight mode to ArduCopter `LAND` (Mode 9) and streams high-rate `LANDING_TARGET` messages in `MAV_FRAME_BODY_FRD`, achieving center-pad touchdown (recorded demo flight error: 9.4 cm, well within the 15.1 cm p95 gate). |
 
-> 🎬 **Simulation Video Artifact**: The complete 60-second 1080p Gazebo SITL flight recording is available in the repository root at [`nadir_gazebo_sitl_demo.mp4`](nadir_gazebo_sitl_demo.mp4), recorded using the baseline configuration [`configs/gazebo_demo.yaml`](configs/gazebo_demo.yaml).
+> **Demo Video**: The complete 60-second Gazebo SITL flight recording is available in the repository root at [`nadir_gazebo_sitl_demo.mp4`](nadir_gazebo_sitl_demo.mp4), recorded using the baseline configuration [`configs/gazebo_demo.yaml`](configs/gazebo_demo.yaml).
 
 ## Key Capabilities
 
 ### Fiducial Marker Detection
-Multi-backend fiducial marker detection system supporting both ArUco (OpenCV) and AprilTag marker families. The detection pipeline incorporates configurable dictionary selection, marker size specification, and target ID allowlisting for operational security.
+Supports both ArUco (OpenCV) and AprilTag dictionaries. The detection pipeline handles dictionary selection, marker size scaling, and an ID allowlist to ignore unrelated tags in the camera FOV.
 
 ### Sensor Fusion & Pose Estimation (Exp-Smooth & C++ EKF)
-Camera-to-body frame coordinate transformation system utilizing Perspective-n-Point (PnP) algorithms integrated with a dual-tier filtering architecture:
-- **Low-Latency Exp-Smooth (Default)**: Exponential Moving Average filter (`alpha=0.35`) providing rapid responsiveness with minimal compute overhead (used in the baseline SITL demo flight).
-- **C++ Extended Kalman Filter (pybind11)**: 9-DOF constant-velocity kinematic observer estimating 3D position, linear velocity, and orientation through intermittent visual occlusion.
+Camera-to-body coordinate transformations use Perspective-n-Point (PnP) coupled with a dual filtering approach:
+- **Low-Latency Exp-Smooth (Default)**: First-order exponential moving average (`alpha=0.35`) providing rapid responsiveness with negligible compute overhead (used in the baseline SITL demo flight).
+- **C++ Extended Kalman Filter (pybind11)**: Kinematic observer tracking 3D position and velocity through short visual occlusions.
 - **Outlier Rejection**: *(Experimental)* Fundamental Matrix RANSAC formulation for visual outlier rejection.
 
 ![EKF Performance Graph](benchmarks/ekf_performance.png)
 
 ### 1D LiDAR Rangefinder Altimetry & Depth Fallback
-Native integration with MAVLink `DISTANCE_SENSOR` telemetry:
+Direct integration with MAVLink `DISTANCE_SENSOR` telemetry:
 - **Independent AGL Altimetry**: Ingests direct rangefinder distance for reliable Above-Ground-Level altitude gates in the Landing FSM.
 - **Degenerate PnP Fallback**: If steep pitch/roll or low light degrades visual depth accuracy, the system automatically uses real-time LiDAR distance as a robust depth fallback for the target vector.
 
-### Flight Control: Cascaded Guidance & B-Spline Trajectories
-Replacing legacy threshold-based FSM logic, the flight controller features a **Cascaded PID architecture with Feedforward Velocity Prediction**. During the final `DESCEND` phase, the system generates **3rd-order B-Spline trajectories** to follow a smooth polynomial curve to the touchdown zone, minimizing camera jitter caused by aggressive braking.
+### Flight Control: Guidance & B-Spline Trajectories
+Features a cascaded guidance controller with feedforward velocity prediction. During the final `DESCEND` phase, the system generates 3rd-order B-Spline trajectories to follow a smooth polynomial curve to touchdown, minimizing camera jitter caused by aggressive braking.
 
 ### MAVLink Integration & Real-Time Telemetry
-Native MAVLink protocol implementation for `LANDING_TARGET` message publishing (Frame: `MAV_FRAME_BODY_FRD = 12`). Engineered for embedded deployment, supporting both UDP/TCP and serial UART transport layers, configurable publishing rates (10-50 Hz), and automated autopilot mode command overrides (`LAND` mode 9).
+Publishes `LANDING_TARGET` messages (`MAV_FRAME_BODY_FRD = 12`) over UDP, TCP, or serial UART (10-50 Hz) and handles autopilot mode transitions (switching to ArduCopter `LAND` mode 9 on target lock).
 
-### Modular Landability & Spatial Obstacle Rejection (PyTorch / YOLOv8)
-Vision-based landing zone safety assessment implemented in `src/nadir/perception/landability` (documented in detail in the [YOLOv8 Landability Model Card](docs/model_card.md)):
-- **Targeted Obstacle Assessment (`weights/best.pt`)**: Real-time neural network inference strictly detecting two primary obstacle classes: `0: Tasit` (Vehicle) and `1: Insan` (Person / Human).
-- **Spatial Clearance & Intersection Gating**: Evaluates 2D spatial overlap between detected ground objects and the landing zone Region of Interest (ROI).
-  - **Human Personnel Encroachment (`Insan`)**: Zero-tolerance safety rule setting `score = 0.00` and raising `human_present`, commanding the FSM into an immediate `ABORT` (Go-Around).
-  - **Vehicle Obstacle Encroachment (`Tasit`)**: Spatial intersection drops landability score to `0.20` ($< 0.40$ threshold), aborting landing due to collision hazard.
-- **Runway Vehicle Validation**: In the Gazebo simulation scenario, a vehicle is present along the approach runway corridor. The perception system actively tracks the vehicle; because it maintains safe clearance outside the pad's target perimeter ($\text{Intersection} = 0$), the zone is verified as clear (`score = 1.0`), authorizing final precision descent.
-- **Heuristic Surface Variance**: Fallback estimator evaluating surface texture variance and dense optical flow motion consistency.
+### Obstacle Clearance & Spatial Gating (YOLOv8)
+Landing zone safety assessment implemented in `src/nadir/perception/landability` (documented in detail in the [YOLOv8 Landability Model Card](docs/model_card.md)):
+- **Targeted Obstacle Assessment (`weights/best.pt`)**: Real-time neural network inference detecting two primary obstacle classes: `0: Tasit` (Vehicle) and `1: Insan` (Person).
+- **Spatial Clearance Gating**: Evaluates 2D spatial overlap between detected objects and the landing zone Region of Interest (ROI).
+  - **Personnel Presence (`Insan`)**: Zero-tolerance rule setting `score = 0.00` and raising `human_present`, commanding the FSM into an immediate `ABORT` (Go-Around).
+  - **Vehicle Overlap (`Tasit`)**: Spatial intersection drops landability score to `0.20` ($< 0.40$ threshold), aborting landing due to collision hazard.
+- **Runway Vehicle Validation**: In the Gazebo simulation, a vehicle on the runway corridor outside the landing pad is tracked; since it maintains clearance outside the pad perimeter ($\text{Intersection} = 0$), the zone is verified as clear (`score = 1.0`), authorizing precision descent.
+- **Heuristic Surface Variance**: Fallback estimator evaluating surface texture variance and optical flow consistency.
 
-### Finite State Machine & High-Level Autonomy
-Deterministic state machine implementation managing the complete autonomous landing sequence: INIT, IDLE, SEARCH, ACQUIRE, ALIGN, DESCEND, TOUCHDOWN, ABORT, and FAILSAFE states. State transitions are governed by rigid mathematical constraints ensuring fail-safe autonomy.
+### Finite State Machine
+A deterministic 9-state machine coordinates the landing sequence (INIT, IDLE, SEARCH, ACQUIRE, ALIGN, DESCEND, TOUCHDOWN, ABORT, FAILSAFE). State transitions are governed by geometric error bounds, variance thresholds, and timeout guards.
 
 During `ACQUIRE`, target loss reverts to `SEARCH`. Once active tracking is engaged (`ALIGN` or `DESCEND`), target loss exceeding 2.0 seconds or estimator divergence escalates directly to `ABORT` (commanding autopilot climb/loiter go-around).
 
@@ -154,9 +144,9 @@ The performance metrics below evaluate sensor noise rejection, filter tracking s
 | **Touchdown Containment (< 25 cm)** | $100\%$ (30/30) | **$100\%$** (30/30) | **$100\%$** (30/30) | Full containment within 1.0m target pad |
 | **Guidance Loop Latency (Sync)** | $16.1\text{ ms}$ | **$18.4\text{ ms}$** | **$19.2\text{ ms}$** | OpenCV ArUco + PnP + Filter + MAVLink (x86/WSL2) |
 
-> ⏱️ **Latency & Architecture Context**: The **18.4 ms** end-to-end latency reflects the synchronous 30 Hz flight guidance loop (Frame Ingest $\rightarrow$ OpenCV ArUco Detection $\rightarrow$ PnP Pose $\rightarrow$ Filtering $\rightarrow$ MAVLink Serialization) benchmarked on an x86_64 host (Intel Core i7 / WSL2). Heavy semantic clearance (YOLOv8) runs asynchronously in a decoupled worker thread at $10\text{ Hz}$ ($14.2\text{ ms}$ CPU on x86, $4.8\text{ ms}$ TensorRT on Jetson Orin NX) and does not throttle high-rate MAVLink guidance.
+> **Latency Breakdown**: End-to-end guidance latency is 18.4 ms for the synchronous 30 Hz flight loop on an x86_64 host (Intel i7, WSL2): image capture -> ArUco detection -> PnP solve -> filtering -> MAVLink packet transmission. YOLOv8 obstacle clearance runs in a separate worker thread at 10 Hz (14.2 ms on CPU, 4.8 ms on Jetson Orin NX with TensorRT) and does not throttle the guidance stream.
 
-> 📊 **Reproducibility Note**: The benchmark dataset and distribution charts can be regenerated locally via:
+> **Reproducing Results**: The benchmark dataset and distribution charts can be regenerated locally via:
 > ```bash
 > python scripts/benchmark_landing_accuracy.py
 > ```
@@ -554,19 +544,14 @@ While Nadir provides robust autonomous precision landing capabilities, the follo
 3. **Visual Occlusion Boundary**: Target loss during initial `ACQUIRE` reverts to `SEARCH`. Target loss exceeding 2.0 seconds during active tracking (`ALIGN` or `DESCEND`) commands an autonomous climb / loiter go-around. For tracking through visual occlusion without triggering premature aborts, the pybind11 C++ EKF backend provides continuous kinematic dead-reckoning.
 4. **B-Spline Trajectory Constraints**: The current 3rd-order B-Spline trajectory generator assumes a static landing zone elevation during the DESCEND phase. Dynamic vertical heave compensation (e.g., landing on pitching naval vessels) is not currently implemented.
 
-## Safety & Operational Compliance
+## Safety & Failsafe Architecture
 
-> **OPERATIONAL SAFETY NOTICE**
->
-> Nadir is engineered exclusively for civilian, commercial, and humanitarian multirotor UAV operations (e.g., automated charging pad docking, industrial inspection, and emergency medical cargo delivery). It operates strictly within civilian autopilot safety boundaries.
-
-### Operational Safety & Failsafe Architecture
-
-- **Fail-Safe by Default**: Uncertainty escalation (e.g., EKF covariance divergence or sustained target loss > 2.0s during alignment/descent) triggers FSM `ABORT`, commanding the autopilot to disengage precision guidance and climb to a safe loiter altitude.
-- **Autopilot Link Loss (Failsafe)**: Telemetry dropouts trigger immediate autopilot fallback behavior (RTL or standard vertical descent).
-- **1D LiDAR Rangefinder Gating**: Independent rangefinder altimetry (simulated in Gazebo, streaming MAVLink `DISTANCE_SENSOR`) provides direct Above-Ground-Level measurements as an independent altitude gate for touchdown confirmation, bypassing barometric altitude drift.
-- **Anti-Spoofing & Marker Security**: Dictionary filtering and ID allowlisting ensure the UAV will not descend on untrusted or counterfeit fiducial tags.
-- **Human & Obstacle Priority**: Landability estimators immediately halt descent if unlandable terrain, ground vehicles (`Tasit`), or human personnel (`Insan`) encroach upon the touchdown perimeter.
+The system enforces deterministic safety behaviors across all flight stages:
+- **Automatic Abort (Go-Around)**: Estimator divergence, sustained target loss (> 2.0s during alignment/descent), or clearance violations trigger an FSM `ABORT`, switching the autopilot to `LOITER` to hold safe altitude.
+- **Autopilot Link Loss (Failsafe)**: Telemetry dropouts trigger immediate autopilot fallback behavior (RTL or standard failsafe descent).
+- **1D LiDAR Rangefinder Gating**: Rangefinder altimetry (streaming MAVLink `DISTANCE_SENSOR`) provides direct Above-Ground-Level measurements as an independent altitude gate for touchdown confirmation, avoiding barometric ground-effect drift.
+- **Marker Validation**: Dictionary filtering and ID allowlisting ensure the UAV will not track spurious or untrusted fiducial tags.
+- **Zone Clearance**: Real-time obstacle detection halts descent if ground vehicles (`Tasit`) or personnel (`Insan`) enter the touchdown perimeter.
 
 ## License
 
