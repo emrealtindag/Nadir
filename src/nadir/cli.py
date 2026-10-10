@@ -284,6 +284,7 @@ def run(
         
         mode_set = False
         land_commands_sent = 0
+        abort_commands_sent = 0
 
         console.print("[green][OK][/green] Nadir started. Entering main loop...")
 
@@ -337,10 +338,10 @@ def run(
                     center_y = int(det.center[1])
                     cv2.drawMarker(hud_frame, (center_x, center_y), (0, 0, 255), cv2.MARKER_CROSS, 25, 3)
                     
-                    # Display distance text neatly in corner
-                    dist_text = f"TARGET: {float(t_cam[2]):.1f}m | LatErr: {lateral_error:.2f}m"
-                    cv2.putText(hud_frame, dist_text, (15, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-
+                    # Telemetry text neatly positioned at line 2 (y=52)
+                    alt_m = lidar_dist if lidar_dist is not None else (float(t_cam[2]) if t_cam is not None else 10.0)
+                    dist_text = f"ALT (LiDAR): {alt_m:.1f}m | LatErr: {lateral_error:.2f}m"
+                    cv2.putText(hud_frame, dist_text, (15, 52), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 0), 2)
 
                 # Run YOLO for landability / visualization
                 landability_score = 1.0
@@ -401,12 +402,12 @@ def run(
                 )
                 outputs = fsm.tick(inputs)
 
-                # Render FSM Status on HUD
+                # Render FSM Status and Altitude on HUD (Line 1: y=25, Line 2: y=52, Banner: y=68..108)
                 if outputs.state == LandingState.ABORT or is_collision:
-                    cv2.rectangle(hud_frame, (10, 35), (580, 75), (0, 0, 180), -1)
+                    cv2.putText(hud_frame, "FSM: ABORT | Landability: 0.20 (UNSAFE)", (15, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+                    cv2.rectangle(hud_frame, (10, 68), (580, 108), (0, 0, 180), -1)
                     reason_txt = "VEHICLE ON PAD" if (is_collision and not human_detected_in_zone) else ((outputs.abort_reason or "OBSTACLE").upper())
-                    cv2.putText(hud_frame, f"SAFETY ABORT: {reason_txt} -> LOITER", (15, 62), cv2.FONT_HERSHEY_SIMPLEX, 0.58, (255, 255, 255), 2)
-                    cv2.putText(hud_frame, f"Landability: {landability_score:.2f} (UNSAFE)", (15, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+                    cv2.putText(hud_frame, f"SAFETY ABORT: {reason_txt} -> LOITER", (15, 96), cv2.FONT_HERSHEY_SIMPLEX, 0.58, (255, 255, 255), 2)
                 elif outputs.state == LandingState.SEARCH:
                     cv2.putText(hud_frame, "FSM: SEARCH | Landability: SEARCHING...", (15, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
                 else:
@@ -423,23 +424,41 @@ def run(
                     console.print(f"[bold blue]FSM State Transition:[/bold blue] -> {outputs.state.name}")
 
                 # 4.5 Safety Go-Around: If FSM triggers ABORT (human/obstacle in zone or lost timeout), command LOITER
-                if outputs.state == LandingState.ABORT and outputs.state_changed:
-                    try:
-                        import pymavlink.dialects.v20.all as mavlink
-                        conn = transport._connection
-                        if conn is not None:
-                            target_sys = getattr(transport, "target_system", 1)
-                            target_comp = getattr(transport, "target_component", 1)
-                            # Mode 5 is LOITER in ArduCopter - halts descent and holds safe position
-                            conn.mav.set_mode_send(
-                                target_sys,
-                                mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
-                                5,
-                            )
-                            conn.set_mode(5)
-                            console.print("[bold red][ABORT][/bold red] Safety abort triggered: switching ArduPilot to LOITER")
-                    except Exception as ex:
-                        console.print(f"[red]Failed to execute ABORT command:[/red] {ex}")
+                if outputs.state == LandingState.ABORT or is_collision:
+                    if abort_commands_sent < 25:
+                        try:
+                            import pymavlink.dialects.v20.all as mavlink
+                            conn = transport._connection
+                            if conn is not None:
+                                target_sys = getattr(transport, "target_system", 1)
+                                target_comp = getattr(transport, "target_component", 1)
+                                # Command 1: MAV_CMD_DO_SET_MODE with custom_mode=5 (LOITER in ArduCopter)
+                                conn.mav.command_long_send(
+                                    target_sys,
+                                    target_comp,
+                                    mavlink.MAV_CMD_DO_SET_MODE,
+                                    0,
+                                    mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
+                                    5,  # 5 is LOITER mode in ArduCopter
+                                    0, 0, 0, 0, 0
+                                )
+                                # Command 2: Standard SET_MODE message (custom_mode=5)
+                                conn.mav.set_mode_send(
+                                    target_sys,
+                                    mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
+                                    5,
+                                )
+                                # Command 3: Direct pymavlink string mode set
+                                try:
+                                    conn.set_mode("LOITER")
+                                except Exception:
+                                    conn.set_mode(5)
+
+                                abort_commands_sent += 1
+                                if abort_commands_sent == 1:
+                                    console.print("[bold red][ABORT][/bold red] Safety abort triggered: overriding ArduPilot to LOITER (holding position)")
+                        except Exception as ex:
+                            console.print(f"[red]Failed to execute ABORT command:[/red] {ex}")
 
                 # 5. Autopilot Override: Cut mission speed and force LAND mode when target is locked!
                 if outputs.state != LandingState.ABORT and target_visible and outputs.state in [LandingState.ACQUIRE, LandingState.ALIGN, LandingState.DESCEND]:

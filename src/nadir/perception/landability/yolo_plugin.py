@@ -137,6 +137,26 @@ class YOLOLandabilityPlugin(ILandabilityEstimator):
                         if (overlap_x * overlap_y) > 0.0:
                             intersects = True
 
+                    # Non-maximum suppression to prevent duplicate overlapping boxes
+                    is_dup = False
+                    for prev_b in boxes_out:
+                        px1, py1, px2, py2 = prev_b[0:4]
+                        ix1 = max(x1, px1)
+                        iy1 = max(y1, py1)
+                        ix2 = min(x2, px2)
+                        iy2 = min(y2, py2)
+                        iw = max(0.0, ix2 - ix1)
+                        ih = max(0.0, iy2 - iy1)
+                        inter_area = iw * ih
+                        area1 = (x2 - x1) * (y2 - y1)
+                        area2 = (px2 - px1) * (py2 - py1)
+                        union_area = area1 + area2 - inter_area
+                        if union_area > 0 and (inter_area / union_area) > 0.40:
+                            is_dup = True
+                            break
+                    if is_dup:
+                        continue
+
                     canonical_name = "Insan" if is_insan else "Tasit"
                     canonical_id = 1 if is_insan else 0
 
