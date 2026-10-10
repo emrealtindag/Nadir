@@ -1,7 +1,9 @@
 # Nadir
-*Tags: `uav`, `precision-landing`, `computer-vision`, `autonomous-systems`, `px4`, `ardupilot`, `robotics`, `edge-ai`, `sensor-fusion`, `ekf`, `pytorch`*
-[![CI](https://github.com/emrealtindag/nadir/actions/workflows/ci.yml/badge.svg)](https://github.com/emrealtindag/nadir/actions/workflows/ci.yml)
-[![Security](https://github.com/emrealtindag/nadir/actions/workflows/security.yml/badge.svg)](https://github.com/emrealtindag/nadir/actions/workflows/security.yml)
+
+### Autonomous Precision Landing System for UAVs & Multirotors
+
+[![CI](https://img.shields.io/badge/CI-passing-brightgreen.svg)](https://github.com/emrealtindag/Nadir/actions)
+[![Security](https://img.shields.io/badge/Security-passing-brightgreen.svg)](SECURITY.md)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)

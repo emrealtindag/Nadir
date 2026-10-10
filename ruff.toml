@@ -214,7 +214,7 @@ property-decorators = ["property", "functools.cached_property"]
 # Flake8 Naming
 # -----------------------------------------------------------------------------
 
-[lint.flake8-naming]
+[lint.pep8-naming]
 # Allow specific naming patterns for class attributes
 classmethod-decorators = ["classmethod", "pydantic.field_validator"]
 
