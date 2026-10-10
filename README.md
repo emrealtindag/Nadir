@@ -57,16 +57,7 @@ The repository includes complete, reproducible Software-In-The-Loop (SITL) demon
 | **00:35 – 00:48** | Target Lock & Clearance Check | Downward camera enters pad FOV. Nadir AI HUD locks ArUco marker, solves 3D PnP pose, and runs YOLOv8 spatial clearance (verifying runway vehicle does not intersect landing pad). |
 | **00:48 – 00:58** | Precision Descent & Touchdown | Nadir overrides flight mode to ArduCopter `LAND` (Mode 9) and streams high-rate `LANDING_TARGET` messages in `MAV_FRAME_BODY_FRD`, achieving center-pad touchdown (< 16 cm error). |
 
-<p align="center">
-  <img src="benchmarks/gazebo_hud_lock.jpg" alt="Target Lock & HUD Detection" width="48%"/>
-  <img src="benchmarks/gazebo_touchdown.jpg" alt="Final Precision Touchdown" width="48%"/>
-</p>
-<p align="center">
-  <em>Left: Nadir AI HUD real-time ArUco target lock and distance tracking. Right: Final precision touchdown directly centered on the landing pad.</em>
-</p>
-
-> **Video Verification Artifact**: The full 60-second 1080p demonstration video is included in the project root as [`nadir_gazebo_sitl_demo.mp4`](nadir_gazebo_sitl_demo.mp4).  
-> *Note on Filter Configuration: The demonstration run operates with the default real-time Exponential Moving Average (EMA) filter (`pose.filter.type: exp_smooth`, `alpha: 0.35`). For high-noise or intermittent occlusion scenarios, the pybind11 C++ EKF backend (`pose.filter.type: ekf`) is available.*
+> 🎬 **Simulation Video Artifact**: The complete 60-second 1080p Gazebo SITL flight recording is available in the repository root at [`nadir_gazebo_sitl_demo.mp4`](nadir_gazebo_sitl_demo.mp4).
 
 ## Key Capabilities
 
@@ -75,7 +66,7 @@ Multi-backend fiducial marker detection system supporting both ArUco (OpenCV) an
 
 ### Sensor Fusion & Pose Estimation (Exp-Smooth & C++ EKF)
 Camera-to-body frame coordinate transformation system utilizing Perspective-n-Point (PnP) algorithms integrated with a dual-tier filtering architecture:
-- **Low-Latency Exp-Smooth (Default)**: Exponential Moving Average filter (`alpha=0.35`) providing rapid responsiveness with minimal companion compute overhead.
+- **Low-Latency Exp-Smooth (Default)**: Exponential Moving Average filter (`alpha=0.35`) providing rapid responsiveness with minimal compute overhead (used in the baseline SITL demo flight).
 - **C++ Extended Kalman Filter (pybind11)**: 9-DOF constant-velocity kinematic observer estimating 3D position, linear velocity, and orientation through intermittent visual occlusion.
 - **Outlier Rejection**: Fundamental Matrix RANSAC to eliminate dynamic ground disturbances from optical flow vectors.
 
