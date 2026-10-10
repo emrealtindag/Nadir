@@ -103,3 +103,10 @@ landability:
   abort_landability: 0.40     # FSM abort threshold
   clearance_margin_factor: 2.5 # Clearance perimeter multiplier
 ```
+
+---
+
+## 5. Model Provenance & Training Details
+
+For complete neural network architecture specifications, dataset splits (2,450 aerial images), mAP evaluation metrics, and inference latency benchmarks across hardware targets, see the [YOLOv8 Landability Model Card](model_card.md).
+
