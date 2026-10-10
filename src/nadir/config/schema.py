@@ -73,6 +73,7 @@ class LandabilityMethod(str, Enum):
 
     HEURISTIC = "heuristic"
     ML = "ml"
+    YOLO = "yolo"
 
 
 class AutopilotType(str, Enum):
@@ -247,6 +248,11 @@ class ThresholdsConfig(BaseModel):
     abort_landability: float = Field(
         default=0.40, ge=0, le=1, description="Landability for ABORT"
     )
+    touchdown_altitude_m: float = Field(
+        default=0.30, ge=0, description="Touchdown altitude in meters"
+    )
+
+    model_config = {"extra": "ignore"}
 
 
 class LimitsConfig(BaseModel):
@@ -267,6 +273,8 @@ class ControlConfig(BaseModel):
     fsm_rate_hz: int = Field(default=20, ge=1, le=100, description="FSM tick rate")
     thresholds: ThresholdsConfig = Field(default_factory=ThresholdsConfig)
     limits: LimitsConfig = Field(default_factory=LimitsConfig)
+
+    model_config = {"extra": "ignore"}
 
 
 class HeuristicConfig(BaseModel):
@@ -290,6 +298,25 @@ class MlConfig(BaseModel):
     )
 
 
+class YoloLandabilityConfig(BaseModel):
+    """YOLO landability configuration."""
+
+    weights_path: str = Field(
+        default="weights/best.pt", description="Path to YOLO weights"
+    )
+    confidence_threshold: float = Field(
+        default=0.35, ge=0, le=1, description="Confidence threshold"
+    )
+    abort_landability: float = Field(
+        default=0.40, ge=0, le=1, description="Abort score threshold"
+    )
+    clearance_margin_factor: float = Field(
+        default=2.5, gt=0, description="Clearance margin factor"
+    )
+
+    model_config = {"extra": "ignore"}
+
+
 class LandabilityConfig(BaseModel):
     """Landability estimation configuration."""
 
@@ -299,6 +326,38 @@ class LandabilityConfig(BaseModel):
     )
     heuristic: HeuristicConfig = Field(default_factory=HeuristicConfig)
     ml: MlConfig = Field(default_factory=MlConfig)
+    yolo: YoloLandabilityConfig = Field(default_factory=YoloLandabilityConfig)
+    weights_path: str = Field(
+        default="weights/best.pt", description="Path to YOLO weights"
+    )
+    confidence_threshold: float = Field(
+        default=0.35, ge=0, le=1, description="Confidence threshold"
+    )
+    abort_landability: float = Field(
+        default=0.40, ge=0, le=1, description="Abort score threshold"
+    )
+    clearance_margin_factor: float = Field(
+        default=2.5, gt=0, description="Clearance margin factor"
+    )
+
+    model_config = {"extra": "ignore"}
+
+
+class LidarConfig(BaseModel):
+    """LiDAR configuration."""
+
+    enabled: bool = Field(default=True, description="Enable LiDAR distance sensor")
+    source: str = Field(
+        default="mavlink_distance_sensor", description="LiDAR source type"
+    )
+    touchdown_alt_m: float = Field(
+        default=0.30, ge=0, description="Touchdown altitude in meters"
+    )
+    max_range_m: float = Field(
+        default=25.0, gt=0, description="Maximum sensor range in meters"
+    )
+
+    model_config = {"extra": "ignore"}
 
 
 class AirSimConfig(BaseModel):
@@ -325,8 +384,16 @@ class SitlConfig(BaseModel):
 class SimulationConfig(BaseModel):
     """Simulation configuration."""
 
+    simulator: str = Field(default="gazebo_harmonic", description="Simulator type")
+    world: str = Field(default="nadir_world.sdf", description="World file name")
+    drone_model: str = Field(
+        default="iris_with_ardupilot", description="Drone model name"
+    )
+    speed_wp_mps: float = Field(default=5.6, description="Waypoint speed in m/s")
     airsim: AirSimConfig = Field(default_factory=AirSimConfig)
     sitl: SitlConfig = Field(default_factory=SitlConfig)
+
+    model_config = {"extra": "ignore"}
 
 
 class ScenariosConfig(BaseModel):
@@ -353,8 +420,9 @@ class NadirConfig(BaseModel):
     pose: PoseConfig = Field(default_factory=PoseConfig)
     mavlink: MavlinkConfig = Field(default_factory=MavlinkConfig)
     control: ControlConfig = Field(default_factory=ControlConfig)
+    lidar: LidarConfig = Field(default_factory=LidarConfig)
     landability: LandabilityConfig = Field(default_factory=LandabilityConfig)
     simulation: SimulationConfig = Field(default_factory=SimulationConfig)
     scenarios: ScenariosConfig = Field(default_factory=ScenariosConfig)
 
-    model_config = {"extra": "forbid"}
+    model_config = {"extra": "ignore"}
