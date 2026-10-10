@@ -217,9 +217,20 @@ def run(
         if mav_cfg is not None:
             t_val = getattr(mav_cfg, "transport", "tcp")
             mav_transport_str = t_val.value if hasattr(t_val, "value") else str(t_val)
-            if hasattr(mav_cfg, "udp") and mav_cfg.udp is not None:
-                mav_addr = getattr(mav_cfg.udp, "address", "127.0.0.1")
-                mav_port = getattr(mav_cfg.udp, "port", 5762)
+            if mav_transport_str == "tcp":
+                if hasattr(mav_cfg, "tcp") and mav_cfg.tcp is not None:
+                    mav_addr = getattr(mav_cfg.tcp, "address", "127.0.0.1")
+                    mav_port = getattr(mav_cfg.tcp, "port", 5762)
+                else:
+                    mav_addr = "127.0.0.1"
+                    mav_port = 5762
+            elif mav_transport_str == "udp":
+                if hasattr(mav_cfg, "udp") and mav_cfg.udp is not None:
+                    mav_addr = getattr(mav_cfg.udp, "address", "127.0.0.1")
+                    mav_port = getattr(mav_cfg.udp, "port", 14550)
+                else:
+                    mav_addr = "127.0.0.1"
+                    mav_port = 14550
 
         transport = MavlinkTransport(
             transport=mav_transport_str,
@@ -339,8 +350,8 @@ def run(
                     cv2.drawMarker(hud_frame, (center_x, center_y), (0, 0, 255), cv2.MARKER_CROSS, 25, 3)
                     
                     # Telemetry text neatly positioned at line 2 (y=52)
-                    alt_m = lidar_dist if lidar_dist is not None else (float(t_cam[2]) if t_cam is not None else 10.0)
-                    dist_text = f"ALT (LiDAR): {alt_m:.1f}m | LatErr: {lateral_error:.2f}m"
+                    alt_m = lidar_dist if (lidar_dist is not None and lidar_dist > 0) else (pose.distance_m if pose.success else (abs(float(t_cam[2])) if t_cam is not None else 10.0))
+                    dist_text = f"ALT: {alt_m:.1f}m | LatErr: {lateral_error:.2f}m"
                     cv2.putText(hud_frame, dist_text, (15, 52), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 0), 2)
 
                 # Run YOLO for landability / visualization
@@ -407,7 +418,7 @@ def run(
                     cv2.putText(hud_frame, "FSM: ABORT | Landability: 0.20 (UNSAFE)", (15, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
                     cv2.rectangle(hud_frame, (10, 68), (580, 108), (0, 0, 180), -1)
                     reason_txt = "VEHICLE ON PAD" if (is_collision and not human_detected_in_zone) else ((outputs.abort_reason or "OBSTACLE").upper())
-                    cv2.putText(hud_frame, f"SAFETY ABORT: {reason_txt} -> LOITER", (15, 96), cv2.FONT_HERSHEY_SIMPLEX, 0.58, (255, 255, 255), 2)
+                    cv2.putText(hud_frame, f"SAFETY ABORT: {reason_txt} -> BRAKE (HOLD)", (15, 96), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 2)
                 elif outputs.state == LandingState.SEARCH:
                     cv2.putText(hud_frame, "FSM: SEARCH | Landability: SEARCHING...", (15, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
                 else:
@@ -423,7 +434,7 @@ def run(
                 if outputs.state_changed:
                     console.print(f"[bold blue]FSM State Transition:[/bold blue] -> {outputs.state.name}")
 
-                # 4.5 Safety Go-Around: If FSM triggers ABORT (human/obstacle in zone or lost timeout), command LOITER
+                # 4.5 Safety Go-Around: If FSM triggers ABORT (human/obstacle in zone or lost timeout), command BRAKE & HOLD ALTITUDE
                 if outputs.state == LandingState.ABORT or is_collision:
                     if abort_commands_sent < 25:
                         try:
@@ -432,33 +443,46 @@ def run(
                             if conn is not None:
                                 target_sys = getattr(transport, "target_system", 1)
                                 target_comp = getattr(transport, "target_component", 1)
-                                # Command 1: MAV_CMD_DO_SET_MODE with custom_mode=5 (LOITER in ArduCopter)
+                                # Command 1: MAV_CMD_DO_SET_MODE with custom_mode=17 (BRAKE in ArduCopter)
+                                # Mode 17 is BRAKE: halts horizontal movement, locks altitude, ignores 0 throttle!
                                 conn.mav.command_long_send(
                                     target_sys,
                                     target_comp,
                                     mavlink.MAV_CMD_DO_SET_MODE,
                                     0,
                                     mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
-                                    5,  # 5 is LOITER mode in ArduCopter
+                                    17,  # 17 is BRAKE mode in ArduCopter
                                     0, 0, 0, 0, 0
                                 )
-                                # Command 2: Standard SET_MODE message (custom_mode=5)
+                                # Command 2: Standard SET_MODE message (custom_mode=17)
                                 conn.mav.set_mode_send(
                                     target_sys,
                                     mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
-                                    5,
+                                    17,
                                 )
                                 # Command 3: Direct pymavlink string mode set
                                 try:
-                                    conn.set_mode("LOITER")
+                                    conn.set_mode("BRAKE")
                                 except Exception:
-                                    conn.set_mode(5)
+                                    conn.set_mode(17)
 
                                 abort_commands_sent += 1
                                 if abort_commands_sent == 1:
-                                    console.print("[bold red][ABORT][/bold red] Safety abort triggered: overriding ArduPilot to LOITER (holding position)")
+                                    console.print("[bold red][ABORT][/bold red] Safety abort triggered: overriding ArduPilot to BRAKE (holding position & altitude)")
                         except Exception as ex:
                             console.print(f"[red]Failed to execute ABORT command:[/red] {ex}")
+
+                    # Extra safety: Lock RC channel 3 (Throttle) to 1500 (hover) so vehicle never descends
+                    try:
+                        conn = transport._connection
+                        if conn is not None:
+                            conn.mav.rc_channels_override_send(
+                                getattr(transport, "target_system", 1),
+                                getattr(transport, "target_component", 1),
+                                0, 0, 1500, 0, 0, 0, 0, 0
+                            )
+                    except Exception:
+                        pass
 
                 # 5. Autopilot Override: Cut mission speed and force LAND mode when target is locked!
                 if outputs.state != LandingState.ABORT and target_visible and outputs.state in [LandingState.ACQUIRE, LandingState.ALIGN, LandingState.DESCEND]:

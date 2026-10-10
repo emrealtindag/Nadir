@@ -201,6 +201,13 @@ class PoseConfig(BaseModel):
     quality: QualityConfig = Field(default_factory=QualityConfig)
 
 
+class TcpConfig(BaseModel):
+    """TCP transport configuration."""
+
+    address: str = Field(default="127.0.0.1", description="TCP address")
+    port: int = Field(default=5762, ge=1, le=65535, description="TCP port")
+
+
 class UdpConfig(BaseModel):
     """UDP transport configuration."""
 
@@ -221,6 +228,7 @@ class MavlinkConfig(BaseModel):
     transport: MavlinkTransport = Field(
         default=MavlinkTransport.UDP, description="Transport type"
     )
+    tcp: TcpConfig = Field(default_factory=TcpConfig)
     udp: UdpConfig = Field(default_factory=UdpConfig)
     serial: SerialConfig = Field(default_factory=SerialConfig)
     system_id: int = Field(default=42, ge=1, le=255, description="System ID")
