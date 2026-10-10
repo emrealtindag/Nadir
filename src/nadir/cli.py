@@ -5,9 +5,10 @@ Provides commands for running the landing system, simulation integration,
 scenario testing, camera calibration, and system diagnostics.
 """
 
+import os
+import time
 from pathlib import Path
 from typing import Optional
-import time
 
 import typer
 from rich.console import Console
