@@ -1,0 +1,61 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+
+# C++ Build outputs
+build/
+bin/
+*.o
+*.obj
+*.a
+*.lib
+*.dll
+
+# Distribution / packaging
+dist/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Testing & coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.hypothesis/
+.tox/
+.nox/
+
+# Type checking & linting
+.mypy_cache/
+.ruff_cache/
+.pyre/
+
+# IDE & editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Run artifacts & flight telemetry logs
+runs/
+*.tlog
+*.bin
+*.log
+*.sdp

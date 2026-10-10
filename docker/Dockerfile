@@ -1,8 +1,8 @@
-# Scandium Docker Image
+# Nadir Docker Image
 # Production-grade container for precision landing system
 #
-# Build: docker build -f docker/Dockerfile -t scandium:latest .
-# Run: docker run -it --rm scandium:latest scandium version
+# Build: docker build -f docker/Dockerfile -t nadir:latest .
+# Run: docker run -it --rm nadir:latest nadir version
 
 # ------------------------------------------------------------------------------
 # Build Stage
@@ -66,8 +66,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean
 
 # Create non-root user for security
-RUN groupadd --gid 1000 scandium \
-    && useradd --uid 1000 --gid 1000 --shell /bin/bash --create-home scandium
+RUN groupadd --gid 1000 nadir \
+    && useradd --uid 1000 --gid 1000 --shell /bin/bash --create-home nadir
 
 # Set working directory
 WORKDIR /app
@@ -82,27 +82,27 @@ COPY --from=builder /app/configs /app/configs
 COPY docker/entrypoint.sh /app/entrypoint.sh
 
 # Set permissions
-RUN chown -R scandium:scandium /app \
+RUN chown -R nadir:nadir /app \
     && chmod +x /app/entrypoint.sh
 
 # Create output directory
-RUN mkdir -p /app/runs && chown scandium:scandium /app/runs
+RUN mkdir -p /app/runs && chown nadir:nadir /app/runs
 
 # Switch to non-root user
-USER scandium
+USER nadir
 
 # Environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    SCANDIUM_LOG_FORMAT=json
+    NADIR_LOG_FORMAT=json
 
 # Expose port for MAVLink UDP (if needed for debugging)
 EXPOSE 14550/udp
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD scandium diagnostics --config /app/configs/default.yaml || exit 1
+    CMD nadir diagnostics --config /app/configs/default.yaml || exit 1
 
 # Default entrypoint
 ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["scandium", "version"]
+CMD ["nadir", "version"]

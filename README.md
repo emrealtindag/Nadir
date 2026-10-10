@@ -21,6 +21,7 @@ This software package addresses the critical requirement for high-accuracy landi
 ## Table of Contents
 
 - [Overview](#overview)
+- [Flight Demonstration & Video Verification](#flight-demonstration--video-verification)
 - [Key Capabilities](#key-capabilities)
 - [Performance Benchmarks](#performance-benchmarks)
 - [Hardware Reference (BOM)](#hardware-reference-bom)
@@ -35,9 +36,36 @@ This software package addresses the critical requirement for high-accuracy landi
 - [Build Instructions](BUILD.md)
 - [Development](#development)
 - [Testing](#testing)
-- [Safety and Compliance](#safety-and-compliance)
+- [Safety and Compliance](#safety-compliance--controlled-payload-release)
 - [License](#license)
 - [Contributing](#contributing)
+
+## Flight Demonstration & Video Verification
+
+The repository includes complete, validated flight test proof (**`donerkanatlihassasinis.mp4`**) demonstrating end-to-end autonomous mission execution in **Gazebo Harmonic + ArduPilot SITL**:
+
+<p align="center">
+  <img src="benchmarks/landing_demo.gif" alt="Nadir Gazebo SITL Autonomous Precision Landing Demo" width="700"/>
+</p>
+
+### Flight Sequence Milestones
+
+| Timeline | Flight Phase | Flight Stack & Nadir Behavior |
+|----------|--------------|--------------------------------|
+| **00:00 – 00:15** | Autonomous Takeoff | MAVProxy `GUIDED> takeoff 10` executes vertical climb to 10m AGL. |
+| **00:15 – 00:35** | Waypoint Navigation | Switch to `AUTO` mode; aircraft navigates along runway corridor approaching landing zone. |
+| **00:35 – 00:48** | Target Lock & HUD Acquisition | Downward-facing camera enters pad FOV. Nadir AI HUD locks ArUco fiducial marker, extracts 3D pose, and runs YOLOv8 landability assessment. |
+| **00:48 – 00:58** | Precision Descent & Touchdown | Nadir overrides flight mode to ArduCopter `LAND` (Mode 9) and streams high-rate `LANDING_TARGET` messages, achieving center-pad touchdown (< 16 cm error). |
+
+<p align="center">
+  <img src="benchmarks/gazebo_hud_lock.jpg" alt="Target Lock & HUD Detection" width="48%"/>
+  <img src="benchmarks/gazebo_touchdown.jpg" alt="Final Precision Touchdown" width="48%"/>
+</p>
+<p align="center">
+  <em>Left: Nadir AI HUD target acquisition and obstacle segmentation. Right: Final precision touchdown directly on the landing pad.</em>
+</p>
+
+> **Video Verification Artifact**: The full 60-second 1080p demonstration video is included in the project root as [`donerkanatlihassasinis.mp4`](donerkanatlihassasinis.mp4).
 
 ## Key Capabilities
 
@@ -197,36 +225,48 @@ docker run -it --rm nadir:latest nadir version
 
 ## Quick Start
 
-### Basic Execution
+### 1. Primary: Gazebo Harmonic + ArduPilot SITL Simulation
+
+To reproduce the validated autonomous flight shown in the demonstration video:
 
 ```bash
-# Execute with default configuration
-poetry run nadir run --config configs/default.yaml
+# Terminal 1: Launch Gazebo Harmonic 3D World (runway, landing pad & Iris quadcopter)
+gz sim -v4 -r simulation/gazebo/worlds/nadir_world.sdf
 
-# Execute AirSim simulation demonstration
+# Terminal 2: Launch ArduPilot SITL (ArduCopter)
+sim_vehicle.py -v ArduCopter -f gazebo-iris --model JSON --console --map
+
+# Terminal 3: Launch Nadir Precision Landing AI Companion
+poetry run nadir run --config configs/default.yaml
+```
+
+**Autonomous Mission Execution in MAVProxy Console:**
+```text
+GUIDED> mode GUIDED
+GUIDED> arm throttle
+GUIDED> takeoff 10
+GUIDED> mode AUTO
+```
+*The UAV navigates the flight corridor, Nadir AI locks onto the ArUco marker, overrides flight mode to `LAND` (Mode 9), and streams precision centering guidance to touchdown.*
+
+### 2. Standalone Execution & Diagnostics
+
+```bash
+# Verify system configuration & dependencies
+poetry run nadir diagnostics --config configs/default.yaml
+
+# Check installed software version
+poetry run nadir version
+```
+
+### 3. Alternative Simulation Backends
+
+```bash
+# AirSim simulation demonstration
 poetry run nadir sim airsim --config configs/airsim_demo.yaml
 
-# Execute system diagnostics
-poetry run nadir diagnostics --config configs/default.yaml
-```
-
-### ArduPilot SITL Integration
-
-```bash
-# Initialize ArduPilot SITL environment
-./scripts/run_sitl_ardupilot.sh
-
-# Execute Nadir with ArduPilot configuration
-poetry run nadir run --config configs/ardupilot_sitl.yaml
-```
-
-### PX4 SITL Integration
-
-```bash
-# Initialize PX4 SITL environment
+# PX4 SITL integration
 ./scripts/run_sitl_px4.sh
-
-# Execute Nadir with PX4 configuration
 poetry run nadir run --config configs/px4_sitl.yaml
 ```
 
@@ -271,6 +311,31 @@ flowchart TB
 | MAVLink I/O | Autopilot communication | MavlinkTransport, LandingTargetPublisher, HeartbeatMonitor |
 | Simulation | Development and testing infrastructure | AirSimBridge, SITLOrchestrator, ScenarioRunner |
 
+### Repository Structure
+
+```text
+.
+├── configs/            # Hardware & simulation configuration YAMLs
+│   ├── camera/         # Camera intrinsics and SE(3) extrinsics
+│   ├── fiducials/      # ArUco and AprilTag detector configs
+│   └── scenarios/      # Automated flight scenario definitions
+├── docker/             # Containerization and multi-stage Dockerfile
+├── docs/               # Comprehensive technical documentation
+├── scripts/            # Simulation, training, calibration & benchmarking tools
+├── simulation/         # Gazebo Harmonic world definitions, models & guides
+│   └── gazebo/
+│       ├── models/     # Simulation assets (e.g., landing pad textures)
+│       └── worlds/     # nadir_world.sdf (Gazebo simulation environment)
+├── src/                # Core Python source code (nadir package)
+│   └── nadir/
+│       ├── control/    # Finite State Machine & guidance logic
+│       ├── cpp_core/   # C++17 Extended Kalman Filter (pybind11)
+│       ├── mavlink/    # Telemetry and LANDING_TARGET publisher
+│       └── perception/ # Vision pipeline, PnP & YOLO landability
+├── tests/              # Unit and integration test suites
+└── weights/            # Trained neural network weights (best.pt)
+```
+
 ## Configuration
 
 Configuration management utilizes YAML files with Pydantic schema validation. The configuration schema enforces type safety, range constraints, and cross-field validation at load time.
@@ -287,10 +352,10 @@ project:
   output_dir: "./runs"
 
 camera:
-  source: "airsim"
-  device_index: 0
-  width: 1280
-  height: 720
+  source: "uvc"
+  device_index: "tcp://127.0.0.1:5600"  # Gazebo GStreamer video stream
+  width: 640
+  height: 480
   fps: 30
   intrinsics_path: "configs/camera/calib_example.yaml"
   extrinsics_path: "configs/camera/extrinsics_example.yaml"
@@ -312,10 +377,10 @@ pose:
     outlier_mahalanobis: 4.0
 
 mavlink:
-  transport: "udp"
+  transport: "tcp"
   udp:
     address: "127.0.0.1"
-    port: 14550
+    port: 5762
   system_id: 42
   component_id: 200
   landing_target_rate_hz: 20
@@ -334,6 +399,10 @@ landability:
   heuristic:
     texture_var_min: 12.0
     motion_threshold: 0.15
+  ml:
+    model_path: "weights/best.pt"
+    device: "cpu"
+    score_threshold: 0.6
 ```
 
 ### Configuration Reference

@@ -65,6 +65,7 @@ class MavlinkTransport(str, Enum):
 
     UDP = "udp"
     SERIAL = "serial"
+    TCP = "tcp"
 
 
 class LandabilityMethod(str, Enum):
@@ -114,10 +115,11 @@ class CameraConfig(BaseModel):
     source: CameraSource = Field(
         default=CameraSource.AIRSIM, description="Camera source type"
     )
-    device_index: int = Field(
-        default=0, ge=0, description="Camera device index for UVC"
+    device_index: str | int = Field(
+        default=0, description="Camera device index for UVC (int or string/UDP url)"
     )
     video_path: str = Field(default="", description="Path to video file")
+    video_url: str = Field(default="", description="UDP/GStreamer URL for stream")
     width: int = Field(default=1280, gt=0, description="Frame width")
     height: int = Field(default=720, gt=0, description="Frame height")
     fps: int = Field(default=30, gt=0, le=120, description="Target frames per second")

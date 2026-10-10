@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <cmath>
 
-namespace scandium {
+namespace nadir {
 namespace cpp_core {
 
 // A minimal Matrix struct for our 6x6 and 6x3 EKF operations to keep zero dependencies
@@ -49,4 +49,4 @@ private:
 };
 
 } // namespace cpp_core
-} // namespace scandium
+} // namespace nadir

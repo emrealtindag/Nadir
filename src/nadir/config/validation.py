@@ -60,7 +60,7 @@ def _validate_camera(config: NadirConfig, config_dir: Optional[Path]) -> list[st
             errors.append("camera.video_path is required when source is 'video_file'")
 
     if config.camera.source == CameraSource.UVC:
-        if config.camera.device_index < 0:
+        if isinstance(config.camera.device_index, int) and config.camera.device_index < 0:
             errors.append("camera.device_index must be non-negative for UVC source")
 
     # Note: Path existence checks are optional at load time

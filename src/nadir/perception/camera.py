@@ -112,7 +112,7 @@ class UvcCameraSource(ICameraSource):
 
     def __init__(
         self,
-        device_index: int = 0,
+        device_index: int | str = 0,
         width: int = 1280,
         height: int = 720,
         fps: int = 30,
@@ -129,7 +129,10 @@ class UvcCameraSource(ICameraSource):
         import cv2
 
         self._device_index = device_index
-        self._cap = cv2.VideoCapture(device_index)
+        if isinstance(device_index, str) and (device_index.startswith("udp://") or device_index.startswith("http")):
+            self._cap = cv2.VideoCapture(device_index, cv2.CAP_FFMPEG)
+        else:
+            self._cap = cv2.VideoCapture(device_index)
         self._cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         self._cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
         self._cap.set(cv2.CAP_PROP_FPS, fps)

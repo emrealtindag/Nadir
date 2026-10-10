@@ -9,11 +9,11 @@ project:
   output_dir: ./runs
 
 camera:
-  source: airsim
-  device_index: 0
+  source: uvc
+  device_index: "tcp://127.0.0.1:5600"
   video_path: ""
-  width: 1280
-  height: 720
+  width: 640
+  height: 480
   fps: 30
   intrinsics_path: configs/camera/calib_example.yaml
   extrinsics_path: configs/camera/extrinsics_example.yaml
@@ -42,10 +42,10 @@ pose:
     min_tag_area_px: 800
 
 mavlink:
-  transport: udp
+  transport: tcp
   udp:
     address: "127.0.0.1"
-    port: 14550
+    port: 5762
   serial:
     device: "/dev/ttyAMA0"
     baud: 921600
@@ -85,7 +85,7 @@ simulation:
     image_type: Scene
   sitl:
     autopilot: ardupilot
-    start_local: true
+    start_local: false
     mavproxy: false
 
 scenarios:

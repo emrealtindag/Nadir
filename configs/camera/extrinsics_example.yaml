@@ -1,12 +1,9 @@
-# Camera Extrinsics Example
-# Camera-to-body transform for downward-facing camera
-
-# Rotation matrix from camera frame to body frame
-# Assumes camera looks straight down
+# Camera Extrinsics for Pure Nadir (90-degree downward pointing camera)
+# Camera frame: X right, Y down, Z optical axis (pointing straight down)
+# Body FRD frame: X forward, Y right, Z down
 rotation_matrix:
-  - [0.0, 1.0, 0.0]
+  - [0.0, -1.0, 0.0]
   - [1.0, 0.0, 0.0]
-  - [0.0, 0.0, -1.0]
+  - [0.0, 0.0, 1.0]
 
-# Translation from body origin to camera origin (meters)
 translation: [0.0, 0.0, 0.05]

@@ -1,5 +1,5 @@
 # =============================================================================
-# Scandium - Production-Grade Precision Landing System
+# Nadir - Production-Grade Precision Landing System
 # MkDocs Documentation Configuration
 # =============================================================================
 # MkDocs is a static site generator for project documentation.
@@ -10,18 +10,18 @@
 # Site Configuration
 # -----------------------------------------------------------------------------
 
-site_name: Scandium Documentation
+site_name: Nadir Documentation
 site_description: Production-grade precision landing system for UAV platforms
-site_author: Scandium Development Team
-site_url: https://scandium-oss.github.io/scandium
+site_author: Nadir Development Team
+site_url: https://nadir-oss.github.io/nadir
 
 # Repository information
-repo_name: scandium-oss/scandium
-repo_url: https://github.com/scandium-oss/scandium
+repo_name: nadir-oss/nadir
+repo_url: https://github.com/nadir-oss/nadir
 edit_uri: edit/main/docs/
 
 # Copyright notice
-copyright: Copyright &copy; 2024-2025 Scandium Development Team
+copyright: Copyright &copy; 2024-2025 Nadir Development Team
 
 # -----------------------------------------------------------------------------
 # Theme Configuration
@@ -156,8 +156,8 @@ markdown_extensions:
   - pymdownx.keys
   - pymdownx.magiclink:
       repo_url_shorthand: true
-      user: scandium-oss
-      repo: scandium
+      user: nadir-oss
+      repo: nadir
   - pymdownx.mark
   - pymdownx.smartsymbols
   - pymdownx.superfences:
@@ -205,7 +205,7 @@ extra:
   # Social links
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/scandium-oss/scandium
+      link: https://github.com/nadir-oss/nadir
       name: GitHub Repository
 
   # Version provider

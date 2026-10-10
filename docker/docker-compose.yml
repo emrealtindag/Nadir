@@ -1,18 +1,18 @@
-# Scandium Docker Compose Configuration
+# Nadir Docker Compose Configuration
 # Orchestrates multi-container deployment for development and testing
 
 version: '3.9'
 
 services:
   # ============================================================================
-  # Scandium Precision Landing Service
+  # Nadir Precision Landing Service
   # ============================================================================
-  scandium:
+  nadir:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    image: scandium:latest
-    container_name: scandium-precision-landing
+    image: nadir:latest
+    container_name: nadir-precision-landing
     restart: unless-stopped
 
     # Network configuration for MAVLink communication
@@ -26,8 +26,8 @@ services:
 
     # Environment variables
     environment:
-      - SCANDIUM_LOG_LEVEL=INFO
-      - SCANDIUM_LOG_FORMAT=json
+      - NADIR_LOG_LEVEL=INFO
+      - NADIR_LOG_FORMAT=json
       - TZ=UTC
 
     # Resource limits
@@ -41,11 +41,11 @@ services:
           memory: 512M
 
     # Command override for production
-    command: ["scandium", "run", "--config", "/app/configs/default.yaml"]
+    command: ["nadir", "run", "--config", "/app/configs/default.yaml"]
 
     # Health check
     healthcheck:
-      test: ["CMD", "scandium", "diagnostics", "--config", "/app/configs/default.yaml"]
+      test: ["CMD", "nadir", "diagnostics", "--config", "/app/configs/default.yaml"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -54,12 +54,12 @@ services:
   # ============================================================================
   # Development Service with Hot Reload
   # ============================================================================
-  scandium-dev:
+  nadir-dev:
     build:
       context: ..
       dockerfile: docker/Dockerfile.dev
-    image: scandium:dev
-    container_name: scandium-dev
+    image: nadir:dev
+    container_name: nadir-dev
     profiles:
       - dev
 
@@ -72,10 +72,10 @@ services:
       - ../runs:/app/runs:rw
 
     environment:
-      - SCANDIUM_LOG_LEVEL=DEBUG
-      - SCANDIUM_LOG_FORMAT=console
+      - NADIR_LOG_LEVEL=DEBUG
+      - NADIR_LOG_FORMAT=console
 
-    command: ["scandium", "run", "--config", "/app/configs/default.yaml"]
+    command: ["nadir", "run", "--config", "/app/configs/default.yaml"]
 
   # ============================================================================
   # Test Runner Service
@@ -84,8 +84,8 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile.dev
-    image: scandium:dev
-    container_name: scandium-test
+    image: nadir:dev
+    container_name: nadir-test
     profiles:
       - test
 
@@ -98,7 +98,7 @@ services:
     environment:
       - PYTHONPATH=/app/src
 
-    command: ["pytest", "tests/", "-v", "--cov=src/scandium", "--cov-report=xml:/app/coverage/coverage.xml"]
+    command: ["pytest", "tests/", "-v", "--cov=src/nadir", "--cov-report=xml:/app/coverage/coverage.xml"]
 
 # ==============================================================================
 # Networks
@@ -111,5 +111,5 @@ networks:
 # Volumes
 # ==============================================================================
 volumes:
-  scandium-runs:
+  nadir-runs:
     driver: local

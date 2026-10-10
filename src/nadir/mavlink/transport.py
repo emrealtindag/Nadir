@@ -18,6 +18,7 @@ class TransportType(Enum):
 
     UDP = "udp"
     SERIAL = "serial"
+    TCP = "tcp"
 
 
 class MavlinkTransport:
@@ -66,6 +67,12 @@ class MavlinkTransport:
         self._connection: Optional[Any] = None
         self._connected = False
         self._last_heartbeat_time: Optional[float] = None
+        self._latest_lidar_distance_m: Optional[float] = None
+
+    @property
+    def lidar_distance_m(self) -> Optional[float]:
+        """Get the latest Lidar distance in meters."""
+        return self._latest_lidar_distance_m
 
     def connect(self) -> bool:
         """
@@ -77,9 +84,16 @@ class MavlinkTransport:
         try:
             from pymavlink import mavutil
 
-            if self._transport_type == TransportType.UDP:
-                # UDP connection string
-                conn_str = f"udp:{self._udp_address}:{self._udp_port}"
+            if self._transport_type == TransportType.TCP:
+                conn_str = f"tcp:{self._udp_address}:{self._udp_port}"
+                self._connection = mavutil.mavlink_connection(
+                    conn_str,
+                    source_system=self._system_id,
+                    source_component=self._component_id,
+                )
+            elif self._transport_type == TransportType.UDP:
+                # UDP connection string (udpin to listen)
+                conn_str = f"udpin:{self._udp_address}:{self._udp_port}"
                 self._connection = mavutil.mavlink_connection(
                     conn_str,
                     source_system=self._system_id,
@@ -241,10 +255,18 @@ class MavlinkTransport:
             return None
 
         try:
-            return self._connection.recv_match(
+            msg = self._connection.recv_match(
                 blocking=blocking,
                 timeout=timeout_s,
             )
+            
+            # Sniff for Sensor Fusion (Lidar / Rangefinder)
+            if msg is not None:
+                if msg.get_type() == "DISTANCE_SENSOR":
+                    # current_distance is in cm, convert to m
+                    self._latest_lidar_distance_m = msg.current_distance / 100.0
+                    
+            return msg
         except Exception:
             return None
 
