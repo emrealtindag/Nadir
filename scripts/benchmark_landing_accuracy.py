@@ -25,6 +25,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from nadir.perception.pose.filtering import ExpSmoother, KalmanFilter3D
 
+# Attempt to import compiled C++ EKF pybind11 core; fall back to Python reference
+try:
+    from nadir_ekf import ExtendedKalmanFilter as CppEKF  # type: ignore
+    HAS_CPP_EKF = True
+except ImportError:
+    HAS_CPP_EKF = False
+
 
 def simulate_descent_trajectory(
     filter_type: str,
@@ -32,7 +39,7 @@ def simulate_descent_trajectory(
     dt: float = 0.033,  # 30 Hz camera
     wind_drift_mps: float = 0.0,
     seed: int = 42,
-) -> tuple[float, float, float]:
+) -> tuple[float, float, float, float]:
     """
     Simulates drone descent from 10m AGL to touchdown (0.3m).
     Returns (touchdown_radial_error_m, mean_jitter_cm, final_x_m, final_y_m).
@@ -68,14 +75,26 @@ def simulate_descent_trajectory(
         est_x = np.array(est_x)
         est_y = np.array(est_y)
     elif filter_type == "ekf":
-        kf = KalmanFilter3D(process_noise=0.08, measurement_noise=0.35, dt=dt)
-        est_x, est_y = [], []
-        for i in range(n_frames):
-            res = kf.update(np.array([meas_x[i], meas_y[i], meas_z[i]]), dt=dt)
-            est_x.append(res.position[0])
-            est_y.append(res.position[1])
-        est_x = np.array(est_x)
-        est_y = np.array(est_y)
+        if HAS_CPP_EKF:
+            ekf = CppEKF(dt=dt, process_noise=0.08, measurement_noise=0.35)
+            est_x, est_y = [], []
+            for i in range(n_frames):
+                ekf.predict()
+                pos = ekf.update([float(meas_x[i]), float(meas_y[i]), float(meas_z[i])])
+                est_x.append(pos[0])
+                est_y.append(pos[1])
+            est_x = np.array(est_x)
+            est_y = np.array(est_y)
+        else:
+            # High-fidelity Python KalmanFilter3D observer fallback
+            kf = KalmanFilter3D(process_noise=0.08, measurement_noise=0.35, dt=dt)
+            est_x, est_y = [], []
+            for i in range(n_frames):
+                res = kf.update(np.array([meas_x[i], meas_y[i], meas_z[i]]), dt=dt)
+                est_x.append(res.position[0])
+                est_y.append(res.position[1])
+            est_x = np.array(est_x)
+            est_y = np.array(est_y)
     else:
         raise ValueError(f"Unknown filter_type: {filter_type}")
 
@@ -97,10 +116,12 @@ def run_benchmark_suite(n_runs: int = 30, output_dir: str = "benchmarks"):
     # Varying wind conditions across runs: 0.0 m/s (calm), 1.5 m/s (moderate), 3.0 m/s (gusting)
     wind_conditions = [0.0] * 10 + [1.5] * 12 + [3.0] * 8
 
+    backend_str = "Compiled C++ pybind11" if HAS_CPP_EKF else "Python KalmanFilter3D Reference"
     print(f"Benchmarking Nadir Pose Filtering Architectures ({n_runs} Seeded Trajectories)...")
+    print(f"EKF Backend: {backend_str}")
 
     for run_id in range(1, n_runs + 1):
-        wind = wind_conditions[run_id - 1]
+        wind = wind_conditions[(run_id - 1) % len(wind_conditions)]
         seed = 1000 + run_id
 
         # 1. Raw PnP Baseline

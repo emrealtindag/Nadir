@@ -75,9 +75,9 @@ class GuidanceController:
         # Scale gains by confidence
         gain = self._lateral_gain * confidence
 
-        # Lateral corrections (move toward target)
-        vx = -gain * target_x  # Negative because offset is from us to target
-        vy = -gain * target_y
+        # Lateral corrections (move toward target in body frame)
+        vx = gain * target_x  # Positive forward velocity toward forward target
+        vy = gain * target_y  # Positive right velocity toward right target
 
         # Descent control
         lateral_error = np.sqrt(target_x**2 + target_y**2)

@@ -146,3 +146,24 @@ def test_yolo_ignores_other_classes():
     assert result.score == 1.0
     assert len(result.debug["boxes"]) == 0
     assert "obstacle_in_landing_zone" not in result.flags
+
+
+def test_yolo_fail_safe_on_uninitialized_and_inference_error():
+    """Uninitialized model or inference runtime crash must fail-safe with score 0.0."""
+    plugin = YOLOLandabilityPlugin(weights_path="nonexistent_weights.pt", confidence_threshold=0.35)
+    # 1. Uninitialized fallback
+    frame = Frame(
+        image_bgr=np.zeros((480, 640, 3), dtype=np.uint8),
+        timestamp_s=0.0,
+        frame_id=1,
+    )
+    res_uninit = plugin.estimate(frame)
+    assert res_uninit.score == 0.0
+    assert "yolo_model_unavailable" in res_uninit.flags
+
+    # 2. Runtime inference exception
+    plugin._initialized = True
+    plugin._model = MagicMock(side_effect=RuntimeError("CUDA out of memory"))
+    res_err = plugin.estimate(frame)
+    assert res_err.score == 0.0
+    assert "yolo_inference_error" in res_err.flags

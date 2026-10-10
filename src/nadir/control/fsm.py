@@ -153,8 +153,10 @@ class LandingFSM:
         """
         self._prev_state = self._state
 
-        # Check for critical failures first
-        if not inputs.mavlink_connected or not inputs.camera_connected:
+        # Check for critical failures first (after initial hardware handshake)
+        if self._state != LandingState.INIT and (
+            not inputs.mavlink_connected or not inputs.camera_connected
+        ):
             self._transition_to(LandingState.FAILSAFE)
             self._abort_reason = "link_lost"
             return self._make_output()
@@ -295,6 +297,8 @@ class LandingFSM:
             self._handle_target_lost(inputs)
             return
 
+        self._last_target_time = None
+
         if inputs.landability_score < self._abort_landability:
             self._transition_to(LandingState.ABORT)
             self._abort_reason = "low_landability"
@@ -308,6 +312,8 @@ class LandingFSM:
         if not inputs.target_visible:
             self._handle_target_lost(inputs)
             return
+
+        self._last_target_time = None
 
         if inputs.landability_score < self._abort_landability:
             self._transition_to(LandingState.ABORT)

@@ -177,7 +177,7 @@ class YOLOLandabilityPlugin(ILandabilityEstimator):
 
         except Exception as e:
             return LandabilityResult(
-                score=0.5,
+                score=0.0,
                 flags={"yolo_inference_error"},
                 debug={"error": str(e)}
             )
@@ -189,7 +189,7 @@ class YOLOLandabilityPlugin(ILandabilityEstimator):
         roi_size: Optional[tuple[int, int]],
     ) -> LandabilityResult:
         return LandabilityResult(
-            score=0.5,
+            score=0.0,
             flags={"yolo_model_unavailable"},
             debug={"fallback": True},
         )

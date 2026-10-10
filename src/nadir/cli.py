@@ -404,7 +404,26 @@ def run(
                 # Print state changes
                 if outputs.state_changed:
                     console.print(f"[bold blue]FSM State Transition:[/bold blue] -> {outputs.state.name}")
-                    
+
+                # 4.5 Safety Go-Around: If FSM triggers ABORT (human/obstacle in zone or lost timeout), command LOITER
+                if outputs.state == LandingState.ABORT and outputs.state_changed:
+                    try:
+                        import pymavlink.dialects.v20.all as mavlink
+                        conn = transport._connection
+                        if conn is not None:
+                            target_sys = getattr(transport, "target_system", 1)
+                            target_comp = getattr(transport, "target_component", 1)
+                            # Mode 5 is LOITER in ArduCopter - halts descent and holds safe position
+                            conn.mav.set_mode_send(
+                                target_sys,
+                                mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
+                                5,
+                            )
+                            conn.set_mode(5)
+                            console.print("[bold red]>>> ABORT TRIGGERED! SWITCHING ARDUPILOT TO LOITER (SAFETY GO-AROUND) <<<[/bold red]")
+                    except Exception as ex:
+                        console.print(f"[red]Failed to execute ABORT command:[/red] {ex}")
+
                 # 5. Autopilot Override: Cut mission speed and force LAND mode when target is locked!
                 if target_visible and (outputs.state in [LandingState.ACQUIRE, LandingState.ALIGN, LandingState.DESCEND] or lateral_error < 5.0):
                     if land_commands_sent < 20:
