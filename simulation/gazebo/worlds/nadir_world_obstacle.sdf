@@ -94,21 +94,23 @@
     <!-- Landing Pad at (0, 40) -->
     <model name="landing_pad">
       <static>true</static>
-      <pose>0 40 0.01 0 0 1.570796</pose>
+      <pose>0 40 0.01 0 0 0</pose>
       <link name="pad_link">
+        <!-- High-contrast 4m x 4m helipad base -->
         <visual name="pad_base">
           <geometry>
-            <box><size>3 3 0.01</size></box>
+            <box><size>4 4 0.01</size></box>
           </geometry>
           <material>
-            <ambient>1 1 1 1</ambient>
-            <diffuse>1 1 1 1</diffuse>
+            <ambient>0.95 0.95 0.95 1</ambient>
+            <diffuse>0.95 0.95 0.95 1</diffuse>
           </material>
         </visual>
+        <!-- 1.6m x 1.6m ArUco Marker -->
         <visual name="pad_center">
-          <pose>0 0 0.006 0 0 0</pose>
+          <pose>-0.5 0 0.006 0 0 0</pose>
           <geometry>
-            <box><size>2 2 0.01</size></box>
+            <box><size>1.6 1.6 0.01</size></box>
           </geometry>
           <material>
             <pbr>
@@ -126,12 +128,31 @@
       <pose degrees="true">0 0 0.195 0 0 90</pose>
     </include>
 
-    <!-- Obstacle: Vehicle parked directly overlapping the landing pad at (0.3, 40) -->
-    <include>
-      <name>hatchback_obstacle_on_pad</name>
-      <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Hatchback</uri>
-      <pose>0.3 40 0 0 0 1.5707</pose>
-    </include>
+    <!-- Obstacle: Scaled compact vehicle parked directly encroaching on landing pad -->
+    <model name="hatchback_obstacle_on_pad">
+      <static>true</static>
+      <pose>0.85 40 0 0 0 1.570796</pose>
+      <link name="link">
+        <collision name="collision">
+          <pose>0 0 0 0 0 1.57079632679</pose>
+          <geometry>
+            <mesh>
+              <scale>0.018 0.018 0.018</scale>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/hatchback/3/files/meshes/hatchback.obj</uri>
+            </mesh>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <pose>0 0 0 0 0 1.57079632679</pose>
+          <geometry>
+            <mesh>
+              <scale>0.018 0.018 0.018</scale>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/hatchback/3/files/meshes/hatchback.obj</uri>
+            </mesh>
+          </geometry>
+        </visual>
+      </link>
+    </model>
 
     <!-- Distant background vehicle -->
     <include>

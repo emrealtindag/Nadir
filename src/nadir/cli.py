@@ -373,8 +373,10 @@ def run(
 
                             box_color = (0, 0, 255) if intersects else (0, 165, 255)
                             cv2.rectangle(hud_frame, (int(x1), int(y1)), (int(x2), int(y2)), box_color, 2)
-                            status_txt = "COLLISION" if intersects else "CLEAR"
-                            lbl = f"{cls_name} ({status_txt}): {conf:.2f}"
+                            if intersects:
+                                lbl = f"VEHICLE PRESENT (ON PAD): {conf:.2f}" if cls_name == "Tasit" else f"HUMAN PRESENT (ON PAD): {conf:.2f}"
+                            else:
+                                lbl = f"{cls_name} (CLEAR): {conf:.2f}"
                             cv2.putText(hud_frame, lbl, (int(x1), int(y1)-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, box_color, 2)
                             
                             cx = int((x1 + x2)/2)
@@ -382,6 +384,8 @@ def run(
                             cv2.drawMarker(hud_frame, (cx, cy), box_color, cv2.MARKER_CROSS, 20, 2)
 
                 # 4. Run FSM
+                # If an obstacle directly encroaches on the landing pad, trigger abort
+                abort_cmd = bool(is_collision)
                 inputs = SystemInputs(
                     target_visible=target_visible,
                     target_confidence=confidence,
@@ -392,19 +396,22 @@ def run(
                     mavlink_connected=transport.is_connected,
                     camera_connected=True,
                     arm_command=True,  # Crucial: allows FSM to transition from IDLE to SEARCH / ACQUIRE
-                    abort_command=False,
+                    abort_command=abort_cmd,
                     timestamp=time.time(),
                 )
                 outputs = fsm.tick(inputs)
 
                 # Render FSM Status on HUD
-                if outputs.state == LandingState.ABORT:
-                    cv2.rectangle(hud_frame, (10, 35), (550, 70), (0, 0, 180), -1)
-                    reason_txt = (outputs.abort_reason or "OBSTACLE").upper()
-                    cv2.putText(hud_frame, f"SAFETY ABORT: {reason_txt} -> LOITER", (15, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+                if outputs.state == LandingState.ABORT or is_collision:
+                    cv2.rectangle(hud_frame, (10, 35), (580, 75), (0, 0, 180), -1)
+                    reason_txt = "VEHICLE ON PAD" if (is_collision and not human_detected_in_zone) else ((outputs.abort_reason or "OBSTACLE").upper())
+                    cv2.putText(hud_frame, f"SAFETY ABORT: {reason_txt} -> LOITER", (15, 62), cv2.FONT_HERSHEY_SIMPLEX, 0.58, (255, 255, 255), 2)
+                    cv2.putText(hud_frame, f"Landability: {landability_score:.2f} (UNSAFE)", (15, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+                elif outputs.state == LandingState.SEARCH:
+                    cv2.putText(hud_frame, "FSM: SEARCH | Landability: SEARCHING...", (15, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
                 else:
-                    status_str = f"FSM: {outputs.state.name} | Landability: {landability_score:.2f}"
-                    cv2.putText(hud_frame, status_str, (15, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
+                    status_str = f"FSM: {outputs.state.name} | Landability: {landability_score:.2f} (SAFE TO LAND)"
+                    cv2.putText(hud_frame, status_str, (15, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
                 # Show the HUD
                 cv2.imshow("Nadir AI HUD", hud_frame)

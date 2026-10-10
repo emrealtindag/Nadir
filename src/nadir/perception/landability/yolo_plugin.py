@@ -90,7 +90,9 @@ class YOLOLandabilityPlugin(ILandabilityEstimator):
             highest_conf = 0.0
             boxes_out = []
 
-            # If landing pad ROI is provided, construct landing zone perimeter box
+            # If landing pad ROI is provided, construct landing zone perimeter box.
+            # If target ROI is not yet provided (e.g. ArUco occluded by vehicle or searching),
+            # monitor the central nadir descent corridor (center 50% of camera FOV).
             pad_box = None
             if roi_center is not None and roi_size is not None:
                 pad_box = (
@@ -98,6 +100,16 @@ class YOLOLandabilityPlugin(ILandabilityEstimator):
                     roi_center[1] - roi_size[1] / 2.0,
                     roi_center[0] + roi_size[0] / 2.0,
                     roi_center[1] + roi_size[1] / 2.0,
+                )
+            else:
+                h_img, w_img = frame.image_bgr.shape[:2]
+                cw = w_img * 0.50
+                ch = h_img * 0.50
+                pad_box = (
+                    (w_img - cw) / 2.0,
+                    (h_img - ch) / 2.0,
+                    (w_img + cw) / 2.0,
+                    (h_img + ch) / 2.0,
                 )
 
             for box in results[0].boxes:

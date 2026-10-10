@@ -161,10 +161,10 @@ class LandingFSM:
             self._abort_reason = "link_lost"
             return self._make_output()
 
-        # External abort command
+        # External abort command or obstacle clearance trigger
         if inputs.abort_command:
             self._transition_to(LandingState.ABORT)
-            self._abort_reason = "external_command"
+            self._abort_reason = "low_landability" if inputs.landability_score < self._abort_landability else "external_command"
             return self._make_output()
 
         # Human present always triggers abort
