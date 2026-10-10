@@ -380,11 +380,6 @@ def run(
                             cy = int((y1 + y2)/2)
                             cv2.drawMarker(hud_frame, (cx, cy), box_color, cv2.MARKER_CROSS, 20, 2)
 
-                # Show the HUD
-                cv2.imshow("Nadir AI HUD", hud_frame)
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
-
                 # 4. Run FSM
                 inputs = SystemInputs(
                     target_visible=target_visible,
@@ -400,6 +395,20 @@ def run(
                     timestamp=time.time(),
                 )
                 outputs = fsm.tick(inputs)
+
+                # Render FSM Status on HUD
+                if outputs.state == LandingState.ABORT:
+                    cv2.rectangle(hud_frame, (10, 35), (550, 70), (0, 0, 180), -1)
+                    reason_txt = (outputs.abort_reason or "OBSTACLE").upper()
+                    cv2.putText(hud_frame, f"SAFETY ABORT: {reason_txt} -> LOITER", (15, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+                else:
+                    status_str = f"FSM: {outputs.state.name} | Landability: {landability_score:.2f}"
+                    cv2.putText(hud_frame, status_str, (15, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
+
+                # Show the HUD
+                cv2.imshow("Nadir AI HUD", hud_frame)
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
 
                 # Print state changes
                 if outputs.state_changed:
@@ -425,7 +434,7 @@ def run(
                         console.print(f"[red]Failed to execute ABORT command:[/red] {ex}")
 
                 # 5. Autopilot Override: Cut mission speed and force LAND mode when target is locked!
-                if target_visible and (outputs.state in [LandingState.ACQUIRE, LandingState.ALIGN, LandingState.DESCEND] or lateral_error < 5.0):
+                if outputs.state != LandingState.ABORT and target_visible and outputs.state in [LandingState.ACQUIRE, LandingState.ALIGN, LandingState.DESCEND]:
                     if land_commands_sent < 20:
                         try:
                             import pymavlink.dialects.v20.all as mavlink
@@ -461,7 +470,7 @@ def run(
                             console.print(f"[red]Failed to send LAND mode:[/red] {ex}")
 
                 # 6. Stream continuous LANDING_TARGET messages for precision centering
-                if target_visible and t_body is not None:
+                if outputs.state != LandingState.ABORT and target_visible and t_body is not None:
                     import math
                     # In BODY_FRD (Forward, Right, Down):
                     # t_body[0] is forward distance, t_body[1] is right distance, t_body[2] is down distance
