@@ -1,0 +1,80 @@
+# Nadir Gazebo Harmonic SITL Demonstration Configuration
+# Exact configuration profile utilized during the validated SITL flight demonstration (nadir_gazebo_sitl_demo.mp4)
+
+project:
+  name: Nadir
+  run_id: gazebo_sitl_demo
+  mode: sitl
+  log_level: INFO
+  output_dir: ./runs/gazebo
+
+camera:
+  source: uvc
+  device_index: "tcp://127.0.0.1:5600" # Gazebo GStreamer TCP video stream
+  width: 640
+  height: 480
+  fps: 30
+  intrinsics_path: configs/camera/calib_example.yaml
+  extrinsics_path: configs/camera/extrinsics_example.yaml
+  undistort: true
+
+fiducials:
+  backend: aruco
+  marker_size_m: 1.0 # 1m physical landing target pad in simulation
+  target_id_allowlist: [1]
+  aruco:
+    dictionary: DICT_4X4_100
+    refine: true
+
+pose:
+  frame: MAV_FRAME_BODY_FRD # MAVLink Frame 12 (Forward-Right-Down) required by ArduPilot PrecLand
+  filter:
+    type: exp_smooth
+    alpha: 0.35 # Low-latency baseline filter utilized in demo flight
+    outlier_mahalanobis: 4.0
+  quality:
+    max_reproj_error_px: 3.0
+    min_tag_area_px: 800
+
+mavlink:
+  transport: udp
+  udp:
+    address: "127.0.0.1"
+    port: 14550 # MAVProxy UDP telemetry bridge
+  system_id: 42
+  component_id: 200
+  target_system_id: 1
+  target_component_id: 1
+  landing_target_rate_hz: 20
+
+lidar:
+  enabled: true
+  source: mavlink_distance_sensor # Simulated Gazebo Ray Rangefinder (DISTANCE_SENSOR)
+  touchdown_alt_m: 0.30
+  max_range_m: 25.0
+
+landability:
+  enabled: true
+  method: yolo
+  weights_path: weights/best.pt
+  confidence_threshold: 0.35
+  abort_landability: 0.40
+  clearance_margin_factor: 2.5 # 2.5x marker size clearance perimeter
+
+control:
+  enable_fsm: true
+  fsm_rate_hz: 20
+  thresholds:
+    acquire_confidence: 0.70
+    align_error_m: 0.50
+    abort_landability: 0.40
+    touchdown_altitude_m: 0.30
+  limits:
+    max_lateral_speed_mps: 1.5
+    max_descent_speed_mps: 0.7
+
+simulation:
+  simulator: gazebo_harmonic
+  world: nadir_world.sdf
+  drone_model: iris_with_ardupilot
+  speed_wp_mps: 5.6

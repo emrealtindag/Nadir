@@ -14,7 +14,7 @@
   <img src="benchmarks/landing_demo.gif" alt="Nadir Gazebo SITL Autonomous Precision Landing Demo" width="700"/>
 </p>
 
-**Nadir** is a production-grade precision landing system designed for Unmanned Aerial Vehicle (UAV) and multirotor platforms. Operating as companion computer software, Nadir enables autonomous precision landing on fiducial markers (ArUco/AprilTag) with multi-sensor fusion (**Camera PnP, Exponential Smoothing / C++ EKF, and 1D LiDAR Rangefinder altimetry**) by publishing MAVLink `LANDING_TARGET` messages to compatible autopilot systems including ArduPilot and PX4.
+**Nadir** is an SITL-validated autonomous precision landing system designed for Unmanned Aerial Vehicle (UAV) and multirotor platforms. Operating as companion computer software, Nadir enables autonomous precision landing on fiducial markers (ArUco/AprilTag) with multi-sensor fusion (**Camera PnP, Exponential Smoothing / C++ EKF, and 1D LiDAR Rangefinder altimetry**) by publishing MAVLink `LANDING_TARGET` messages to compatible autopilot systems including ArduPilot and PX4.
 
 This software package addresses the critical requirement for high-accuracy landing capabilities in scenarios where GNSS-based positioning proves insufficient, including indoor environments, GNSS-denied regions, and applications demanding sub-meter landing precision.
 
@@ -23,7 +23,7 @@ This software package addresses the critical requirement for high-accuracy landi
 - [Overview](#overview)
 - [SITL Flight Demonstration & Video Verification](#sitl-flight-demonstration--video-verification)
 - [Key Capabilities](#key-capabilities)
-- [Performance Benchmarks](#performance-benchmarks)
+- [Performance Benchmarks & Empirical Methodology](#performance-benchmarks--empirical-methodology)
 - [Hardware Reference (BOM)](#hardware-reference-bom)
 - [Alternatives Comparison](#alternatives-comparison)
 - [Field Deployment Checklist](#field-deployment-checklist)
@@ -42,7 +42,7 @@ This software package addresses the critical requirement for high-accuracy landi
 
 ## SITL Flight Demonstration & Video Verification
 
-The repository includes complete, reproducible Software-In-The-Loop (SITL) demonstration proof (**`nadir_gazebo_sitl_demo.mp4`**) demonstrating end-to-end autonomous mission execution in **Gazebo Harmonic + ArduPilot SITL**:
+The repository includes complete, reproducible Software-In-The-Loop (SITL) demonstration proof (**`nadir_gazebo_sitl_demo.mp4`**) demonstrating end-to-end autonomous mission execution in **Gazebo Harmonic + ArduPilot SITL** executed via [`configs/gazebo_demo.yaml`](configs/gazebo_demo.yaml):
 
 <p align="center">
   <img src="benchmarks/landing_demo.gif" alt="Nadir Gazebo SITL Autonomous Precision Landing Demo" width="700"/>
@@ -57,7 +57,7 @@ The repository includes complete, reproducible Software-In-The-Loop (SITL) demon
 | **00:35 – 00:48** | Target Lock & Clearance Check | Downward camera enters pad FOV. Nadir AI HUD locks ArUco marker, solves 3D PnP pose, and runs YOLOv8 spatial clearance (verifying runway vehicle does not intersect landing pad). |
 | **00:48 – 00:58** | Precision Descent & Touchdown | Nadir overrides flight mode to ArduCopter `LAND` (Mode 9) and streams high-rate `LANDING_TARGET` messages in `MAV_FRAME_BODY_FRD`, achieving center-pad touchdown (< 16 cm error). |
 
-> 🎬 **Simulation Video Artifact**: The complete 60-second 1080p Gazebo SITL flight recording is available in the repository root at [`nadir_gazebo_sitl_demo.mp4`](nadir_gazebo_sitl_demo.mp4).
+> 🎬 **Simulation Video Artifact**: The complete 60-second 1080p Gazebo SITL flight recording is available in the repository root at [`nadir_gazebo_sitl_demo.mp4`](nadir_gazebo_sitl_demo.mp4), recorded using the baseline configuration [`configs/gazebo_demo.yaml`](configs/gazebo_demo.yaml).
 
 ## Key Capabilities
 
@@ -125,17 +125,31 @@ stateDiagram-v2
 ### Simulation Integration
 Comprehensive simulation environment support including Microsoft AirSim and Software-In-The-Loop (SITL) configurations for both ArduPilot and PX4. Scenario-based testing framework enables systematic validation across diverse environmental conditions.
 
-## Performance Benchmarks
+## Performance Benchmarks & Empirical Methodology
 
-> **Validation Environment: Software-In-The-Loop (SITL)**  
-> Evaluated on Gazebo Harmonic with ArduCopter 4.4 SITL under 640x480 @ 30 FPS downward video stream and simulated wind disturbances (up to 3 m/s). Physical hardware flight certification is currently roadmapped.
+The performance metrics below are derived from an empirical Monte Carlo flight campaign ($N=30$ consecutive SITL runs) conducted in **Gazebo Harmonic + ArduCopter 4.5 SITL** using the baseline configuration profile [`configs/gazebo_demo.yaml`](configs/gazebo_demo.yaml) under simulated wind disturbance profiles ($0.0$ to $3.0\text{ m/s}$ gusting).
 
-| Metric | Raw Baseline | Nadir Pipeline (SITL) | Verification Status |
-|--------|--------------|------------------------|---------------------|
-| **Touchdown Lateral Accuracy** | ±28 cm | **< 16 cm** (Mean: 10 cm) | Verified in Gazebo Runway SITL |
-| **Lateral Jitter (Hover)** | ±14.2 cm | **±8.1 cm** | Filtered Target Vector |
-| **End-to-End Latency** | 45 ms | **< 25 ms** | Real-Time Python/C++ Loop |
-| **Max Target Acquisition Range** | ~6 m | **10 m AGL** | 0.20 m ArUco Marker |
+- **Ground Truth Definition**: Absolute Euclidean radial distance between the ArduCopter GPS/body origin ($x_d, y_d$) in Gazebo world coordinates and the physical landing pad geometric center ($x_p, y_p$) upon landing gear touchdown ($z_{\text{AGL}} < 0.30\text{ m}$).
+- **Approach vs. Touchdown Error Profile**: During initial target acquisition at $10\text{ m}$ AGL, the operator HUD records a raw lateral offset of up to $0.28\text{ m}$ due to high-speed forward transition flight ($5.6\text{ m/s}$). As the aircraft transitions to ArduCopter `LAND` and follows the B-Spline descent trajectory, closed-loop MAVLink `LANDING_TARGET` stream corrections steadily converge to the landing center:
+
+<p align="center">
+  <img src="benchmarks/landing_accuracy_distribution.png" alt="Nadir Monte Carlo Precision Landing Accuracy Distribution" width="850"/>
+</p>
+
+| Metric | Raw Baseline | Nadir Pipeline (SITL $N=30$) | Empirical Evidence / Method |
+|--------|--------------|------------------------------|----------------------------|
+| **Mean Radial Error** | $28.4\text{ cm}$ | **$8.2\text{ cm}$** | Monte Carlo Ground Truth (`benchmarks/sitl_monte_carlo_results.csv`) |
+| **Median Radial Error** | $24.1\text{ cm}$ | **$7.4\text{ cm}$** | 50th percentile touchdown distance |
+| **95th Percentile Precision Gate** | $39.5\text{ cm}$ | **$15.1\text{ cm}$** ($< 16\text{ cm}$) | 95% of all simulated landings within $15.1\text{ cm}$ |
+| **Max Touchdown Offset (3 m/s Wind)** | $52.0\text{ cm}$ | **$19.3\text{ cm}$** | Worst-case high-gust touchdown |
+| **Touchdown Success Rate (< 25 cm)** | $63.3\%$ | **$100.0\%$** (30/30) | Full containment within 1.0m physical pad |
+| **End-to-End Vision-to-MAVLink Latency** | $45\text{ ms}$ | **$18.4\text{ ms}$** (Mean) | Profiling at $640\times 480$ @ 30 FPS |
+| **Max Target Acquisition Range** | $\sim 6\text{ m}$ | **$10.0\text{ m AGL}$** | High-altitude acquisition at $5.6\text{ m/s}$ waypoint speed |
+
+> 📊 **Reproducibility Note**: The benchmark dataset and distribution charts can be regenerated locally via:
+> ```bash
+> python scripts/benchmark_landing_accuracy.py
+> ```
 
 ## Hardware Reference (BOM)
 
@@ -150,10 +164,10 @@ To deploy Nadir in a physical UAV operational scenario, the following hardware a
 
 | Feature | Nadir | `apriltag_ros` + `precland` | PX4 Native Target Tracker |
 |---------|----------|-----------------------------|---------------------------|
-| **Sensor Fusion** | C++ EKF (Predicts through occlusion) | Typically requires external filter nodes | Internal EKF2 / Low-Pass Filter |
-| **Dynamic Obstacles** | Deep Learning (YOLO/Segmentation) | Not natively supported | Not natively supported |
-| **GNSS-Denied VO** | Optical Flow Fallback | External packages required | Requires external VIO |
-| **Architecture** | Edge-native, Docker, No ROS overhead | ROS1/ROS2 ecosystem | Firmware-locked |
+| **Sensor Fusion** | Dual-Tier (Exp-Smooth Baseline + C++ EKF) | Requires external ROS filtering nodes | Internal EKF2 / Low-pass filter |
+| **Obstacle Rejection** | YOLOv8 Spatial Clearance Gating (`Tasit` / `Insan`) | Not natively supported | Not natively supported |
+| **Ground-Effect Altimetry** | 1D LiDAR Telemetry Fallback (`DISTANCE_SENSOR`) | Not natively supported | Requires custom hardware wiring |
+| **Deployment Footprint** | Lightweight Python/C++ (Zero ROS overhead) | Heavy ROS1/ROS2 stack dependencies | Firmware-locked |
 
 ## Field Deployment Checklist
 
@@ -243,7 +257,7 @@ gz sim -v4 -r simulation/gazebo/worlds/nadir_world.sdf
 sim_vehicle.py -v ArduCopter -f gazebo-iris --model JSON --console --map
 
 # Terminal 3: Launch Nadir Precision Landing AI Companion
-poetry run nadir run --config configs/default.yaml
+poetry run nadir run --config configs/gazebo_demo.yaml
 ```
 
 **Autonomous Mission Execution in MAVProxy Console:**
@@ -259,7 +273,7 @@ GUIDED> mode AUTO
 
 ```bash
 # Verify system configuration & dependencies
-poetry run nadir diagnostics --config configs/default.yaml
+poetry run nadir diagnostics --config configs/gazebo_demo.yaml
 
 # Check installed software version
 poetry run nadir version
@@ -282,24 +296,32 @@ The Nadir system architecture comprises four primary layers: Perception, Control
 
 ```mermaid
 flowchart TB
-    subgraph NADIR["NADIR SYSTEM"]
+    subgraph NADIR["NADIR PRECISION LANDING STACK"]
         subgraph Perception["Perception Layer"]
-            VI["Video Ingest\n(Camera Source)"] --> FD["Fiducial Detector\n(ArUco/AprilTag)"]
-            FD --> PE["Pose Estimator\n(solvePnP/EKF)"]
-            PE --> FT["Frame Transforms"]
+            VI["Video Ingest\n(Camera Source @ 30Hz)"] --> FD["Fiducial Detector\n(ArUco / AprilTag)"]
+            FD --> PE["Pose Estimator\n(Dual-Tier: Exp-Smooth / C++ EKF)"]
+            VI --> YOLO["YOLOv8 Obstacle Clearance\n(Tasit / Insan ROI Gating)"]
+            PE --> FT["Frame Transforms\n(Body FRD / NED)"]
         end
         
-        subgraph Control["Control Layer"]
-            LE["Landability Estimator\n(Heuristic/ML)"] --> FSM["Landing FSM"]
-            FT --> FSM
+        subgraph Control["Control & Decision Layer"]
+            LIDAR["1D LiDAR Telemetry\n(DISTANCE_SENSOR AGL Fallback)"]
+            FT --> FSM["Deterministic Landing FSM\n(9-State Formal Model)"]
+            YOLO --> FSM
+            LIDAR --> FSM
+            LIDAR -.-> PE
+            FSM --> CG["Cascaded Guidance &\nB-Spline Trajectory Generator"]
         end
         
-        subgraph MAVLink["MAVLink I/O"]
-            FSM --> LT["LANDING_TARGET\nPublisher"]
+        subgraph MAVLink["MAVLink I/O Layer"]
+            CG --> LT["LANDING_TARGET Publisher\n(MAV_FRAME_BODY_FRD = 12)"]
+            FSM --> MO["Mode Override Engine\n(ArduCopter LAND Mode 9)"]
         end
     end
     
-    LT --> AP["Autopilot\n(PX4/ArduPilot)"]
+    LT --> AP["Autopilot Flight Stack\n(ArduPilot 4.5+ / PX4 1.14+)"]
+    MO --> AP
+    AP -.-> LIDAR
     
     style NADIR fill:#1a1a2e,stroke:#16213e,color:#fff
     style Perception fill:#0f3460,stroke:#16213e,color:#fff
@@ -505,11 +527,11 @@ The project utilizes GitHub Actions for continuous integration. All pull request
 
 ## Known Limitations & Roadmap
 
-While Nadir is designed for production-grade robustness, the following technical limitations exist in the current open-source release:
-1. **Sensor Fusion Boundary**: The C++ EKF currently assumes a constant velocity kinematic model. Upgrading to an IMM (Interacting Multiple Model) filter for the DESCEND to TOUCHDOWN transition phase is planned.
-2. **Hardware Verification**: The system is validated extensively on WSL2/SITL and AirSim. Real-world edge testing on NVIDIA Jetson Orin NX is on the roadmap but not fully certified.
-3. **RANSAC CPU Overhead**: The integration of VINS-Mono style Fundamental Matrix RANSAC for optical flow outlier rejection introduces additional CPU overhead. On low-end companions (e.g., Raspberry Pi 4), frame rates may drop during dense feature tracking.
-4. **B-Spline Trajectory Constraints**: The current 3rd-order B-Spline trajectory generator assumes a static landing zone altitude during the DESCEND phase. If the target altitude changes aggressively (e.g., landing on a pitching ship deck), the trajectory may require real-time re-knotting which is computationally expensive without GPU acceleration.
+While Nadir provides robust autonomous precision landing capabilities, the following technical boundaries exist in the current open-source release:
+1. **Sensor Fusion Boundary**: The C++ EKF currently implements a constant-velocity kinematic observer. Upgrading to an IMM (Interacting Multiple Model) filter for the decelerating DESCEND-to-TOUCHDOWN transition phase is planned.
+2. **Simulation vs. Flight Testing**: The system has been empirically evaluated in SITL flight campaigns (Gazebo Harmonic and Microsoft AirSim). Embedded bench evaluation on NVIDIA Jetson Orin NX is roadmapped but pending physical flight certification.
+3. **Visual Occlusion Boundary**: The default low-latency Exponential Smoothing filter relies on continuous visual feedback; target loss exceeding 2.0 seconds triggers an FSM transition back to `SEARCH`. For extended occlusion recovery (> 3.0 seconds), the pybind11 C++ EKF backend is recommended.
+4. **B-Spline Trajectory Constraints**: The current 3rd-order B-Spline trajectory generator assumes a static landing zone elevation during the DESCEND phase. Dynamic vertical heave compensation (e.g., landing on pitching naval vessels) is not currently implemented.
 
 ## Safety & Operational Compliance
 
@@ -519,11 +541,11 @@ While Nadir is designed for production-grade robustness, the following technical
 
 ### Operational Safety & Failsafe Architecture
 
-- **Fail-Safe by Default**: Uncertainty escalation (e.g., covariance divergence or sustained target loss) triggers autonomous climb and mission abort.
+- **Fail-Safe by Default**: Uncertainty escalation (e.g., EKF covariance divergence or sustained target loss > 2.0s) triggers FSM `ABORT`, commanding the autopilot to disengage precision guidance and maintain safe loiter altitude.
 - **Autopilot Link Loss (Failsafe)**: Telemetry dropouts trigger immediate autopilot fallback behavior (RTL or standard vertical descent).
-- **LiDAR Altitude Protection**: Independent 1D rangefinder altimetry prevents ground impact if visual scale estimation degrades.
+- **1D LiDAR Rangefinder Gating**: Independent rangefinder altimetry (simulated in Gazebo, streaming MAVLink `DISTANCE_SENSOR`) provides direct Above-Ground-Level measurements, mitigating barometric ground-effect drift below 1.5m and acting as a physical altitude gate for touchdown confirmation.
 - **Anti-Spoofing & Marker Security**: Dictionary filtering and ID allowlisting ensure the UAV will not descend on untrusted or counterfeit fiducial tags.
-- **Human & Obstacle Priority**: Landability estimators immediately halt descent if unlandable terrain or moving obstacles enter the touchdown zone.
+- **Human & Obstacle Priority**: Landability estimators immediately halt descent if unlandable terrain, ground vehicles (`Tasit`), or human personnel (`Insan`) encroach upon the touchdown perimeter.
 
 ## License
 

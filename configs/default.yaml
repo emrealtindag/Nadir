@@ -43,9 +43,12 @@ pose:
 
 mavlink:
   transport: tcp
-  udp:
+  tcp:
     address: "127.0.0.1"
     port: 5762
+  udp:
+    address: "127.0.0.1"
+    port: 14550
   serial:
     device: "/dev/ttyAMA0"
     baud: 921600
