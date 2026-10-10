@@ -84,10 +84,10 @@ Publishes `LANDING_TARGET` messages (`MAV_FRAME_BODY_FRD = 12`) over UDP, TCP, o
 </p>
 
 Landing zone safety assessment implemented in `src/nadir/perception/landability` (documented in detail in the [YOLOv8 Landability Model Card](docs/model_card.md)):
-- **Targeted Obstacle Assessment (`weights/best.pt`)**: Real-time neural network inference detecting two primary obstacle classes: `0: Tasit` (Vehicle) and `1: Insan` (Person).
+- **Targeted Obstacle Assessment (`weights/best.pt`)**: Real-time neural network inference detecting two primary obstacle classes: `0: Car` (Vehicle) and `1: People` (Person).
 - **Spatial Clearance Gating**: Evaluates 2D spatial overlap between detected objects and the landing zone Region of Interest (ROI).
-  - **Personnel Presence (`Insan`)**: Zero-tolerance rule setting `score = 0.00` and raising `human_present`, commanding the FSM into an immediate `ABORT` (Go-Around).
-  - **Vehicle Overlap (`Tasit`)**: Spatial intersection drops landability score to `0.20` ($< 0.40$ threshold), aborting landing due to collision hazard.
+  - **Personnel Presence (`People`)**: Zero-tolerance rule setting `score = 0.00` and raising `human_present`, commanding the FSM into an immediate `ABORT` (Go-Around).
+  - **Vehicle Overlap (`Car`)**: Spatial intersection drops landability score to `0.20` ($< 0.40$ threshold), aborting landing due to collision hazard.
 - **Autopilot Safety Override (`BRAKE` Mode 17)**: When an obstacle encroaches on the pad, Nadir commands ArduPilot into `BRAKE` mode (Mode 17) via MAVLink, instantly halting forward velocity, locking current altitude (11m AGL), and maintaining a stable hover without descending or auto-disarming.
 - **Runway Vehicle Validation**: In the Gazebo simulation, a vehicle on the runway corridor outside the landing pad is tracked; since it maintains clearance outside the pad perimeter ($\text{Intersection} = 0$), the zone is verified as clear (`score = 1.0`), authorizing precision descent.
 - **Heuristic Surface Variance**: Fallback estimator evaluating surface texture variance and optical flow consistency.
@@ -171,7 +171,7 @@ To deploy Nadir in a physical UAV operational scenario, the following hardware a
 | Feature | Nadir | `apriltag_ros` + `precland` | PX4 Native Target Tracker |
 |---------|----------|-----------------------------|---------------------------|
 | **Sensor Fusion** | Dual-Tier (Exp-Smooth Baseline + C++ EKF) | Requires external ROS filtering nodes | Internal EKF2 / Low-pass filter |
-| **Obstacle Clearance** | YOLOv8 Spatial Clearance Gating (`Tasit` / `Insan`) | Not natively supported | Not natively supported |
+| **Obstacle Clearance** | YOLOv8 Spatial Clearance Gating (`Car` / `People`) | Not natively supported | Not natively supported |
 | **Trajectory Generation** | 3rd-Order B-Spline Smooth Descent | Proportional guidance | Linear vertical descent |
 | **Deployment Footprint** | Lightweight Python/C++ (Zero ROS overhead) | Heavy ROS1/ROS2 stack dependencies | Firmware-locked |
 
@@ -309,7 +309,7 @@ flowchart TB
         subgraph Perception["Perception Layer"]
             VI["Video Ingest\n(Camera Source @ 30Hz)"] --> FD["Fiducial Detector\n(ArUco / AprilTag)"]
             FD --> PE["Pose Estimator\n(Dual-Tier: Exp-Smooth / C++ EKF)"]
-            VI --> YOLO["YOLOv8 Obstacle Clearance\n(Tasit / Insan ROI Gating)"]
+            VI --> YOLO["YOLOv8 Obstacle Clearance\n(Car / People ROI Gating)"]
             PE --> FT["Frame Transforms\n(Body FRD / NED)"]
         end
         
@@ -438,8 +438,8 @@ landability:
     device: "cpu"
     score_threshold: 0.60
     classes:
-      0: "Tasit"   # Vehicle obstacle
-      1: "Insan"   # Human personnel (zero-tolerance abort)
+      0: "Car"      # Vehicle obstacle
+      1: "People"   # Human personnel (zero-tolerance abort)
 
 lidar:
   enabled: true
@@ -557,7 +557,7 @@ The system enforces deterministic safety behaviors across all flight stages:
 - **Autopilot Link Loss (Failsafe)**: Telemetry dropouts trigger immediate autopilot fallback behavior (RTL or standard failsafe descent).
 - **1D LiDAR Rangefinder Gating**: Rangefinder altimetry (streaming MAVLink `DISTANCE_SENSOR`) provides direct Above-Ground-Level measurements as an independent altitude gate for touchdown confirmation, avoiding barometric ground-effect drift.
 - **Marker Validation**: Dictionary filtering and ID allowlisting ensure the UAV will not track spurious or untrusted fiducial tags.
-- **Zone Clearance**: Real-time obstacle detection halts descent if ground vehicles (`Tasit`) or personnel (`Insan`) enter the touchdown perimeter.
+- **Zone Clearance**: Real-time obstacle detection halts descent if ground vehicles (`Car`) or personnel (`People`) enter the touchdown perimeter.
 
 ## License
 
