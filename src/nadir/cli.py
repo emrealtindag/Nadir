@@ -362,12 +362,18 @@ def run(
                     )
                     landability_score = yolo_res.score
                     is_collision = yolo_res.debug.get("obstacle_in_zone", False)
+                    human_detected_in_zone = "human_present" in yolo_res.flags
                     if "boxes" in yolo_res.debug:
-                        for box in yolo_res.debug["boxes"]:
-                            x1, y1, x2, y2, conf, cls = box
-                            box_color = (0, 0, 255) if is_collision else (0, 165, 255)
+                        for box_data in yolo_res.debug["boxes"]:
+                            x1, y1, x2, y2, conf = box_data[0:5]
+                            cls_id = box_data[5]
+                            cls_name = box_data[6] if len(box_data) > 6 else str(cls_id)
+                            intersects = box_data[7] if len(box_data) > 7 else False
+
+                            box_color = (0, 0, 255) if intersects else (0, 165, 255)
                             cv2.rectangle(hud_frame, (int(x1), int(y1)), (int(x2), int(y2)), box_color, 2)
-                            lbl = f"COLLISION OBJ: {conf:.2f}" if is_collision else f"CLEAR OBJ: {conf:.2f}"
+                            status_txt = "COLLISION" if intersects else "CLEAR"
+                            lbl = f"{cls_name} ({status_txt}): {conf:.2f}"
                             cv2.putText(hud_frame, lbl, (int(x1), int(y1)-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, box_color, 2)
                             
                             cx = int((x1 + x2)/2)
@@ -386,6 +392,7 @@ def run(
                     lateral_error_m=lateral_error,
                     altitude_m=lidar_dist if lidar_dist is not None else (float(t_cam[2]) if t_cam is not None else 10.0),
                     landability_score=landability_score,
+                    human_present=human_detected_in_zone,
                     mavlink_connected=transport.is_connected,
                     camera_connected=True,
                     arm_command=True,  # Crucial: allows FSM to transition from IDLE to SEARCH / ACQUIRE

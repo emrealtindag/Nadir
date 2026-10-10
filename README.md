@@ -94,9 +94,11 @@ Native MAVLink protocol implementation for `LANDING_TARGET` message publishing (
 
 ### Modular Landability & Spatial Obstacle Rejection (PyTorch / YOLOv8)
 Vision-based landing zone safety assessment implemented in `src/nadir/perception/landability`:
-- **Spatial Clearance & Intersection Gating**: Evaluates spatial overlap between detected ground obstacles (vehicles, humans) and the landing zone Region of Interest (ROI). If an obstacle intersects or encroaches upon the landing pad perimeter, the landability score instantly drops below `abort_landability` (0.40), commanding the FSM into an immediate `ABORT` (Go-Around) to prevent touchdown on top of the obstacle.
-- **Runway Vehicle Validation**: In the Gazebo simulation scenario, a vehicle is present along the approach runway. The perception system actively monitors ground objects; because the vehicle maintains safe clearance outside the landing pad's target perimeter, the zone is verified as clear, authorizing final precision descent.
-- **Deep Learning Pipeline**: Integrates custom-trained YOLOv8 models (`weights/best.pt`) and semantic segmentation with sub-millisecond inference and automated bounding box HUD visualizers.
+- **Multi-Class Ground Assessment (`weights/best.pt`)**: Custom neural network trained on 4 key domain classes: `0: Tasit` (Vehicles), `1: Insan` (Humans/Personnel), `2: UAP` (Landing Pad), and `3: UAI` (Landing Zone).
+- **Spatial Clearance & Intersection Gating**: Evaluates 2D spatial overlap between detected ground objects and the landing zone Region of Interest (ROI).
+  - **Human Personnel Encroachment (`Insan`)**: Zero-tolerance safety rule setting `score = 0.00` and raising `human_present`, commanding the FSM into an immediate `ABORT` (Go-Around).
+  - **Vehicle Obstacle Encroachment (`Tasit`)**: Spatial intersection drops landability score to `0.20` ($< 0.40$ threshold), aborting landing due to collision hazard.
+- **Runway Vehicle Validation**: In the Gazebo simulation scenario, a vehicle is present along the approach runway corridor. The perception system actively tracks the vehicle; because it maintains safe clearance outside the pad's target perimeter ($\text{Intersection} = 0$), the zone is verified as clear (`score = 1.0`), authorizing final precision descent.
 - **Heuristic Surface Variance**: Fallback estimator evaluating surface texture variance and dense optical flow motion consistency.
 
 ### Finite State Machine & High-Level Autonomy
