@@ -304,6 +304,12 @@ class LandingFSM:
             self._abort_reason = "low_landability"
             return
 
+        # Estimator divergence guard: abort if uncertainty exceeds threshold
+        if inputs.variance > self._max_variance * 3.0:
+            self._transition_to(LandingState.ABORT)
+            self._abort_reason = "estimator_diverged"
+            return
+
         if inputs.lateral_error_m <= self._align_error_m:
             self._transition_to(LandingState.DESCEND)
 
@@ -318,6 +324,12 @@ class LandingFSM:
         if inputs.landability_score < self._abort_landability:
             self._transition_to(LandingState.ABORT)
             self._abort_reason = "low_landability"
+            return
+
+        # Estimator divergence guard: abort if uncertainty exceeds threshold
+        if inputs.variance > self._max_variance * 3.0:
+            self._transition_to(LandingState.ABORT)
+            self._abort_reason = "estimator_diverged"
             return
 
         if inputs.altitude_m <= self._touchdown_altitude_m:

@@ -73,3 +73,17 @@ def test_fsm_target_lost_timer_resets_on_reacquisition():
     out = fsm.tick(SystemInputs(mavlink_connected=True, camera_connected=True, target_visible=False, timestamp=12.1))
     assert out.state == LandingState.ABORT
     assert out.abort_reason == "target_lost_timeout"
+
+
+def test_fsm_estimator_divergence_triggers_abort():
+    fsm = LandingFSM(max_variance=0.5)
+    # INIT -> IDLE -> ACQUIRE -> ALIGN
+    fsm.tick(SystemInputs(mavlink_connected=True, camera_connected=True))
+    fsm.tick(SystemInputs(mavlink_connected=True, camera_connected=True, arm_command=True, target_visible=True))
+    fsm.tick(SystemInputs(mavlink_connected=True, camera_connected=True, target_visible=True, variance=0.01))
+    assert fsm.state == LandingState.ALIGN
+
+    # Massive variance spike (estimator divergence > max_variance * 3) -> ABORT
+    out = fsm.tick(SystemInputs(mavlink_connected=True, camera_connected=True, target_visible=True, variance=2.5))
+    assert out.state == LandingState.ABORT
+    assert out.abort_reason == 'estimator_diverged'

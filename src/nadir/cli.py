@@ -204,8 +204,8 @@ def run(
 
         detector = RobustLandingPadDetector(raw_detector)
 
-        # Marker size for PnP
-        marker_size = 2.0  # Real physical size in Gazebo
+        # Marker size for PnP (read from config, default to 2.0 for Gazebo)
+        marker_size = getattr(getattr(cfg, "fiducials", None), "marker_size_m", 2.0)
 
 
 
@@ -276,6 +276,27 @@ def run(
                         mavlink.MAV_PARAM_TYPE_REAL32
                     )
                 console.print("[green][OK][/green] Autopilot parameters auto-configured (WP_SPD=5.6m/s, PLND=ON).")
+                
+                # Explicitly request high-rate DISTANCE_SENSOR (132) and GLOBAL_POSITION_INT (33) telemetry stream
+                try:
+                    transport._connection.mav.command_long_send(
+                        1, 1,
+                        mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,
+                        0,
+                        132,  # DISTANCE_SENSOR message ID
+                        50000,  # 50,000 microseconds = 20 Hz
+                        0, 0, 0, 0, 0
+                    )
+                    transport._connection.mav.command_long_send(
+                        1, 1,
+                        mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,
+                        0,
+                        33,  # GLOBAL_POSITION_INT message ID
+                        50000,
+                        0, 0, 0, 0, 0
+                    )
+                except Exception:
+                    pass
             except Exception as e:
                 console.print(f"[yellow]Param set notice:[/yellow] {e}")
 
@@ -292,6 +313,10 @@ def run(
         weights_file = "weights/best.pt" if os.path.exists("weights/best.pt") else "best.pt"
         console.print(f"[yellow]Loading YOLO model ({weights_file})...[/yellow]")
         yolo_plugin = YOLOLandabilityPlugin(weights_path=weights_file, confidence_threshold=0.35)
+        
+        from nadir.perception.pose.filtering import ExpSmoother
+        pose_alpha = getattr(getattr(getattr(cfg, "pose", None), "filter", None), "alpha", 0.35)
+        smoother = ExpSmoother(alpha=pose_alpha)
         
         mode_set = False
         land_commands_sent = 0
@@ -323,6 +348,7 @@ def run(
                 target_visible = False
                 confidence = 0.0
                 lateral_error = float('inf')
+                pose_variance = 0.0
                 t_cam = None
                 t_body = None
                 
@@ -337,6 +363,11 @@ def run(
                     else:
                         # Fallback heuristic distance estimation based on marker pixel size
                         t_cam = np.array([0.0, 0.0, lidar_dist if lidar_dist is not None else 10.0], dtype=np.float64)
+
+                    # Apply temporal exponential smoothing to stabilize pose measurements
+                    filtered_pose = smoother.update(t_cam, timestamp=time.time())
+                    t_cam = filtered_pose.position
+                    pose_variance = float(np.mean(filtered_pose.variance))
 
                     target_visible = True
                     confidence = 0.95
@@ -385,10 +416,12 @@ def run(
 
                             box_color = (0, 0, 255) if intersects else (0, 165, 255)
                             cv2.rectangle(hud_frame, (int(x1), int(y1)), (int(x2), int(y2)), box_color, 2)
+                            is_veh = cls_name in ["Tasit", "Car", "Vehicle"]
                             if intersects:
-                                lbl = f"VEHICLE PRESENT (ON PAD): {conf:.2f}" if cls_name == "Tasit" else f"HUMAN PRESENT (ON PAD): {conf:.2f}"
+                                lbl = f"VEHICLE PRESENT (ON PAD): {conf:.2f}" if is_veh else f"HUMAN PRESENT (ON PAD): {conf:.2f}"
                             else:
-                                lbl = f"{cls_name} (CLEAR): {conf:.2f}"
+                                display_name = "Car" if is_veh else ("People" if cls_name in ["Insan", "People", "Human", "Person"] else cls_name)
+                                lbl = f"{display_name} (CLEAR): {conf:.2f}"
                             cv2.putText(hud_frame, lbl, (int(x1), int(y1)-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, box_color, 2)
                             
                             cx = int((x1 + x2)/2)
@@ -402,7 +435,7 @@ def run(
                     target_visible=target_visible,
                     target_confidence=confidence,
                     lateral_error_m=lateral_error,
-                    altitude_m=lidar_dist if lidar_dist is not None else (float(t_cam[2]) if t_cam is not None else 10.0),
+                    altitude_m=lidar_dist if (lidar_dist is not None and lidar_dist > 0) else (alt_m if 'alt_m' in locals() else 10.0),
                     landability_score=landability_score,
                     human_present=human_detected_in_zone,
                     mavlink_connected=transport.is_connected,
@@ -410,6 +443,7 @@ def run(
                     arm_command=True,  # Crucial: allows FSM to transition from IDLE to SEARCH / ACQUIRE
                     abort_command=abort_cmd,
                     timestamp=time.time(),
+                    variance=pose_variance,
                 )
                 outputs = fsm.tick(inputs)
 

@@ -123,9 +123,9 @@ class YOLOLandabilityPlugin(ILandabilityEstimator):
                 if hasattr(self._model, "names") and isinstance(self._model.names, dict):
                     raw_label = str(self._model.names.get(cls_id, "")).lower()
 
-                # Strictly filter: ONLY Tasit (0) and Insan (1) are allowed
+                # Strictly filter: ONLY Tasit/Car (0) and Insan/People (1) are allowed
                 is_tasit = (cls_id == 0) or ("tasit" in raw_label) or ("car" in raw_label) or ("vehicle" in raw_label)
-                is_insan = (cls_id == 1) or ("insan" in raw_label) or ("person" in raw_label) or ("human" in raw_label)
+                is_insan = (cls_id == 1) or ("insan" in raw_label) or ("person" in raw_label) or ("human" in raw_label) or ("people" in raw_label)
                 if not (is_tasit or is_insan):
                     continue
 

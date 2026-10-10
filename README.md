@@ -56,26 +56,27 @@ A full Software-In-The-Loop (SITL) flight sequence is provided in [`nadir_gazebo
 ## Key Capabilities
 
 ### Fiducial Marker Detection
-Supports both ArUco (OpenCV) and AprilTag dictionaries. The detection pipeline handles dictionary selection, marker size scaling, and an ID allowlist to ignore unrelated tags in the camera FOV.
+Supports both ArUco (OpenCV) and AprilTag dictionaries with ID allowlist filtering. In simulation and challenging visual conditions, an adaptive high-contrast contour fallback provides robust square pad localization.
 
 ### Sensor Fusion & Pose Estimation (Exp-Smooth & C++ EKF)
-Camera-to-body coordinate transformations use Perspective-n-Point (PnP) coupled with a dual filtering approach:
-- **Low-Latency Exp-Smooth (Default)**: First-order exponential moving average (`alpha=0.35`) providing rapid responsiveness with negligible compute overhead (used in the baseline SITL demo flight).
-- **C++ Extended Kalman Filter (pybind11)**: Kinematic observer tracking 3D position and velocity through short visual occlusions.
-- **Outlier Rejection**: *(Experimental)* Fundamental Matrix RANSAC formulation for visual outlier rejection.
+Camera-to-body coordinate transformations use Perspective-n-Point (PnP) coupled with temporal filtering:
+- **Low-Latency Exp-Smooth (Active Pipeline)**: First-order exponential moving average (`alpha=0.35`) running in the companion computer loop to stabilize PnP position estimates and reject high-frequency camera noise.
+- **C++ Extended Kalman Filter (pybind11)**: Kinematic observer tracking 3D position and velocity with compiled pybind11 bindings for high-performance offboard sensor fusion.
+- **Outlier Rejection**: *(Experimental)* Fundamental Matrix RANSAC formulation in `nadir.perception.vo` for visual outlier rejection.
 
 ![EKF Performance Graph](benchmarks/ekf_performance.png)
 
-### 1D LiDAR Rangefinder Altimetry & Depth Fallback
-Direct integration with MAVLink `DISTANCE_SENSOR` telemetry:
+### 1D LiDAR Rangefinder Altimetry
+Direct integration with MAVLink `DISTANCE_SENSOR` telemetry requested at 20 Hz (`MAV_CMD_SET_MESSAGE_INTERVAL`):
 - **Independent AGL Altimetry**: Ingests direct rangefinder distance for reliable Above-Ground-Level altitude gates in the Landing FSM.
-- **Degenerate PnP Fallback**: If steep pitch/roll or low light degrades visual depth accuracy, the system automatically uses real-time LiDAR distance as a robust depth fallback for the target vector.
+- **Depth Fallback**: If visual depth degrades, the system automatically uses real-time rangefinder distance as a depth fallback for the target vector.
 
-### Flight Control: Guidance & B-Spline Trajectories
-Features a cascaded guidance controller with feedforward velocity prediction. During the final `DESCEND` phase, the system generates 3rd-order B-Spline trajectories to follow a smooth polynomial curve to touchdown, minimizing camera jitter caused by aggressive braking.
+### Precision Touchdown & Trajectory Generation
+- **SITL Closed-Loop Descent**: Touchdown guidance in the ArduPilot SITL demonstration is executed by ArduCopter's onboard `AC_PrecLand` library driven by high-frequency MAVLink `LANDING_TARGET` streams (`MAV_FRAME_BODY_FRD = 12`).
+- **Autonomous Trajectory Library**: Standalone 3rd-order B-Spline smooth polynomial trajectory generation (`src/nadir/control/trajectory.py`) and MPC guidance (`src/nadir/control/mpc_guidance.py`) are provided for companion-commanded velocity setpoint pipelines.
 
 ### MAVLink Integration & Real-Time Telemetry
-Publishes `LANDING_TARGET` messages (`MAV_FRAME_BODY_FRD = 12`) over UDP, TCP, or serial UART (10-50 Hz) and handles autopilot mode transitions (switching to ArduCopter `LAND` mode 9 on target lock).
+Publishes `LANDING_TARGET` messages over UDP, TCP, or serial UART (10-50 Hz), syncs heartbeat liveness (with a 3.5s timeout failsafe guard), auto-configures autopilot precision landing parameters, and handles flight mode transitions (switching to `LAND` mode 9 on target lock, or `BRAKE` mode 17 on abort).
 
 ### Obstacle Clearance & Spatial Gating (YOLOv8)
 
@@ -95,7 +96,7 @@ Landing zone safety assessment implemented in `src/nadir/perception/landability`
 ### Finite State Machine
 A deterministic 9-state machine coordinates the landing sequence (INIT, IDLE, SEARCH, ACQUIRE, ALIGN, DESCEND, TOUCHDOWN, ABORT, FAILSAFE). State transitions are governed by geometric error bounds, variance thresholds, and timeout guards.
 
-During `ACQUIRE`, target loss reverts to `SEARCH`. Once active tracking is engaged (`ALIGN` or `DESCEND`), target loss exceeding 2.0 seconds or estimator divergence escalates directly to `ABORT` (commanding autopilot climb/loiter go-around).
+During `ACQUIRE`, target loss reverts to `SEARCH`. Once active tracking is engaged (`ALIGN` or `DESCEND`), target loss exceeding 2.0 seconds or estimator divergence escalates directly to `ABORT` (commanding autopilot `BRAKE` mode to halt forward motion and hold altitude).
 
 ```mermaid
 stateDiagram-v2
@@ -131,7 +132,7 @@ Comprehensive simulation environment support including Microsoft AirSim and Soft
 
 ## Performance Benchmarks & Empirical Methodology
 
-The performance metrics below evaluate sensor noise rejection, filter tracking stability, and terminal touchdown centering across three filtering backends using $N=30$ seeded Monte Carlo descent trajectories under simulated wind disturbance profiles ($0.0\text{ to }3.0\text{ m/s}$ gusting):
+The performance metrics below evaluate sensor noise rejection, filter tracking stability, and terminal touchdown centering across three filtering backends using synthetic $N=30$ seeded Monte Carlo descent trajectories generated via `scripts/benchmark_landing_accuracy.py` under simulated wind disturbance profiles ($0.0\text{ to }3.0\text{ m/s}$ gusting):
 
 - **Ground Truth Definition**: Absolute Euclidean radial distance between the Gazebo ground-truth multirotor model pose $(x_m, y_m)$ and the physical landing pad geometric center $(x_p, y_p)$ upon landing gear contact ($z_{\text{AGL}} < 0.30\text{ m}$).
 - **Approach vs. Touchdown Error Profile**: During initial target acquisition at $10\text{ m}$ AGL at high-speed forward transition flight ($5.6\text{ m/s}$ waypoint speed), the operator HUD records an initial visual offset of up to $\sim 0.30\text{ m}$. As the aircraft transitions to ArduCopter `LAND` (Mode 9) and follows the B-Spline descent trajectory, closed-loop MAVLink `LANDING_TARGET` stream corrections smoothly converge to center-pad touchdown:
@@ -150,7 +151,7 @@ The performance metrics below evaluate sensor noise rejection, filter tracking s
 | **Touchdown Containment (< 25 cm)** | $100\%$ (30/30) | **$100\%$** (30/30) | **$100\%$** (30/30) | Full containment within 1.0m target pad |
 | **Guidance Loop Latency (Sync)** | $16.1\text{ ms}$ | **$18.4\text{ ms}$** | **$19.2\text{ ms}$** | OpenCV ArUco + PnP + Filter + MAVLink (x86/WSL2) |
 
-> **Latency Breakdown**: End-to-end guidance latency is 18.4 ms for the synchronous 30 Hz flight loop on an x86_64 host (Intel i7, WSL2): image capture -> ArUco detection -> PnP solve -> filtering -> MAVLink packet transmission. YOLOv8 obstacle clearance runs in a separate worker thread at 10 Hz (14.2 ms on CPU, 4.8 ms on Jetson Orin NX with TensorRT) and does not throttle the guidance stream.
+> **Latency Breakdown**: End-to-end guidance latency is 18.4 ms for the synchronous 30 Hz flight loop on an x86_64 host (Intel i7, WSL2): image capture -> ArUco detection -> PnP solve -> filtering -> MAVLink packet transmission. YOLOv8 obstacle clearance executes synchronously in the companion computer pipeline (~14.2 ms CPU inference with PyTorch, ~4.8 ms with TensorRT on Jetson Orin NX) while maintaining real-time flight cadence.
 
 > **Reproducing Results**: The benchmark dataset and distribution charts can be regenerated locally via:
 > ```bash
@@ -547,13 +548,13 @@ The project utilizes GitHub Actions for continuous integration. All pull request
 While Nadir provides robust autonomous precision landing capabilities, the following technical boundaries exist in the current open-source release:
 1. **Sensor Fusion Boundary**: The C++ EKF currently implements a constant-velocity kinematic observer. Upgrading to an IMM (Interacting Multiple Model) filter for the decelerating DESCEND-to-TOUCHDOWN transition phase is planned.
 2. **Simulation vs. Flight Testing**: The system has been empirically evaluated in SITL flight campaigns (Gazebo Harmonic and Microsoft AirSim). Embedded bench evaluation on NVIDIA Jetson Orin NX is roadmapped but pending physical flight certification.
-3. **Visual Occlusion Boundary**: Target loss during initial `ACQUIRE` reverts to `SEARCH`. Target loss exceeding 2.0 seconds during active tracking (`ALIGN` or `DESCEND`) commands an autonomous climb / loiter go-around. For tracking through visual occlusion without triggering premature aborts, the pybind11 C++ EKF backend provides continuous kinematic dead-reckoning.
+3. **Visual Occlusion Boundary**: Target loss during initial `ACQUIRE` reverts to `SEARCH`. Target loss exceeding 2.0 seconds during active tracking (`ALIGN` or `DESCEND`) commands an autonomous abort and position hold (`BRAKE`). For tracking through visual occlusion without triggering premature aborts, the pybind11 C++ EKF backend provides continuous kinematic dead-reckoning.
 4. **B-Spline Trajectory Constraints**: The current 3rd-order B-Spline trajectory generator assumes a static landing zone elevation during the DESCEND phase. Dynamic vertical heave compensation (e.g., landing on pitching naval vessels) is not currently implemented.
 
 ## Safety & Failsafe Architecture
 
 The system enforces deterministic safety behaviors across all flight stages:
-- **Automatic Abort (Go-Around)**: Estimator divergence, sustained target loss (> 2.0s during alignment/descent), or clearance violations trigger an FSM `ABORT`, switching the autopilot to `LOITER` to hold safe altitude.
+- **Automatic Abort (Hold & Hover)**: Estimator divergence, sustained target loss (> 2.0s during alignment/descent), or clearance violations trigger an FSM `ABORT`, switching the autopilot to ArduPilot `BRAKE` (Mode 17) to immediately stop horizontal movement and hold safe altitude without uncommanded descent.
 - **Autopilot Link Loss (Failsafe)**: Telemetry dropouts trigger immediate autopilot fallback behavior (RTL or standard failsafe descent).
 - **1D LiDAR Rangefinder Gating**: Rangefinder altimetry (streaming MAVLink `DISTANCE_SENSOR`) provides direct Above-Ground-Level measurements as an independent altitude gate for touchdown confirmation, avoiding barometric ground-effect drift.
 - **Marker Validation**: Dictionary filtering and ID allowlisting ensure the UAV will not track spurious or untrusted fiducial tags.

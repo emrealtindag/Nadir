@@ -260,9 +260,11 @@ class MavlinkTransport:
                 timeout=timeout_s,
             )
             
-            # Sniff for Sensor Fusion (Lidar / Rangefinder)
+            # Sniff for Sensor Fusion (Lidar / Rangefinder) and Heartbeat
             if msg is not None:
-                if msg.get_type() == "DISTANCE_SENSOR":
+                if msg.get_type() == "HEARTBEAT":
+                    self._last_heartbeat_time = time.time()
+                elif msg.get_type() == "DISTANCE_SENSOR":
                     # current_distance is in cm, convert to m
                     self._latest_lidar_distance_m = msg.current_distance / 100.0
                     
@@ -283,8 +285,12 @@ class MavlinkTransport:
 
     @property
     def is_connected(self) -> bool:
-        """Check if connected."""
-        return self._connected and self._connection is not None
+        """Check if connected and heartbeat link is active."""
+        if not (self._connected and self._connection is not None):
+            return False
+        if self._last_heartbeat_time is not None:
+            return (time.time() - self._last_heartbeat_time) < 3.5
+        return True
 
     @property
     def mav(self) -> Optional[Any]:
