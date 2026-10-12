@@ -2,6 +2,7 @@
 
 ### Autonomous Precision Landing System for UAVs & Multirotors
 
+[![DOI](https://img.shields.io/badge/DOI-10.13140%2FRG.2.2.24014.01608-blue)](https://doi.org/10.13140/RG.2.2.24014.01608)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![C++17](https://img.shields.io/badge/C%2B%2B-17-00599C?logo=c%2B%2B)](src/nadir/cpp_core/)
 [![pybind11](https://img.shields.io/badge/pybind11-bound-blueviolet.svg)](src/nadir/cpp_core/pybind_wrapper.cpp)
@@ -33,6 +34,7 @@ The system is designed for GNSS-denied environments, rooftop pads, or docking st
 - [Documentation](#documentation)
 - [Safety & Failsafes](#safety--failsafe-architecture)
 - [License](#license)
+- [Citation](#citation)
 
 ## SITL Flight Demonstration
 
@@ -578,6 +580,20 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+```
+
+## Citation
+
+If you use Nadir in your academic research, benchmarks, or engineering projects, please cite it as:
+
+```bibtex
+@misc{altindag2026nadir,
+  title={Nadir: Autonomous Precision Landing System for UAVs & Multirotors},
+  author={Alt{\i}nda{\u{g}}, Emre},
+  year={2026},
+  doi={10.13140/RG.2.2.24014.01608},
+  url={https://doi.org/10.13140/RG.2.2.24014.01608}
+}
 ```
 
 ## Contributing
